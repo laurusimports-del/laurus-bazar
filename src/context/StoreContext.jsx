@@ -140,10 +140,60 @@ export const StoreProvider = ({ children }) => {
     dataRef.current = data;
   }, [data]);
 
+  const lastSyncTimestampRef = useRef(0);
+  const isSyncingRef = useRef(false);
+
+  const fromProductRow = (p) => {
+    let colors = [];
+    let originalPrice = null;
+    let colorStock = null;
+    const desc = p.description || '';
+    if (desc.includes('||COLORS||')) {
+      try {
+        const parts = desc.split('||COLORS||');
+        colors = JSON.parse(parts[1].split('||FRAG||')[0].split('||PROMO||')[0].split('||COLOR_STOCK||')[0]);
+      } catch (e) {}
+    }
+    if (desc.includes('||PROMO||')) {
+      try {
+        const pParts = desc.split('||PROMO||');
+        const promoObj = JSON.parse(pParts[1].split('||FRAG||')[0].split('||COLORS||')[0].split('||COLOR_STOCK||')[0]);
+        originalPrice = Number(promoObj.originalPrice) || null;
+      } catch (e) {}
+    }
+    if (desc.includes('||COLOR_STOCK||')) {
+      try {
+        const csParts = desc.split('||COLOR_STOCK||');
+        colorStock = JSON.parse(csParts[1].split('||FRAG||')[0].split('||COLORS||')[0].split('||PROMO||')[0]);
+      } catch (e) {}
+    }
+    return {
+      ...p,
+      costPrice: Number(p.cost_price) || 0,
+      price: Number(p.price) || 0,
+      originalPrice: originalPrice,
+      stock: Number(p.stock) || 0,
+      colors: Array.isArray(colors) ? colors : [],
+      colorStock: (colorStock && typeof colorStock === 'object') ? colorStock : null,
+    };
+  };
+
+  const fromSaleRow = (s) => ({
+    ...s,
+    customerId: s.customer_id,
+    customerName: s.customer_name,
+    customerPhone: s.customer_phone,
+    paymentMethod: s.payment_method,
+    paidAtSale: Number(s.paid_at_sale) || 0,
+    remainingBalance: Number(s.remaining_balance) || 0,
+  });
+
   // Load from Supabase. The cloud is the single source of truth for the catalog,
   // so every browser/device shows exactly the same products in real-time.
   const syncWithCloud = async (options = {}) => {
     if (!isSupabaseConfigured() || !supabase) return false;
+    if (isSyncingRef.current) return false;
+    isSyncingRef.current = true;
     try {
       const [prodRes, custRes, salesRes, finRes, setRes] = await Promise.all([
         supabase.from('products').select('*'),
@@ -186,59 +236,20 @@ export const StoreProvider = ({ children }) => {
           updated_at: new Date().toISOString(),
         });
         setIsCloudConnected(true);
+        lastSyncTimestampRef.current = Date.now();
         if (!options.silent) {
           showToast(`☁️ Seus ${currentLocalProds.length} produtos foram sincronizados automaticamente com a nuvem!`, 'success');
         }
+        isSyncingRef.current = false;
         return syncWithCloud({ silent: true });
       }
 
       const newProducts = (prodRes.data && prodRes.data.length > 0)
-        ? prodRes.data.map((p) => {
-            let colors = [];
-            let originalPrice = null;
-            let colorStock = null;
-            const desc = p.description || '';
-            if (desc.includes('||COLORS||')) {
-              try {
-                const parts = desc.split('||COLORS||');
-                colors = JSON.parse(parts[1].split('||FRAG||')[0].split('||PROMO||')[0].split('||COLOR_STOCK||')[0]);
-              } catch (e) {}
-            }
-            if (desc.includes('||PROMO||')) {
-              try {
-                const pParts = desc.split('||PROMO||');
-                const promoObj = JSON.parse(pParts[1].split('||FRAG||')[0].split('||COLORS||')[0].split('||COLOR_STOCK||')[0]);
-                originalPrice = Number(promoObj.originalPrice) || null;
-              } catch (e) {}
-            }
-            if (desc.includes('||COLOR_STOCK||')) {
-              try {
-                const csParts = desc.split('||COLOR_STOCK||');
-                colorStock = JSON.parse(csParts[1].split('||FRAG||')[0].split('||COLORS||')[0].split('||PROMO||')[0]);
-              } catch (e) {}
-            }
-            return {
-              ...p,
-              costPrice: Number(p.cost_price) || 0,
-              price: Number(p.price) || 0,
-              originalPrice: originalPrice,
-              stock: Number(p.stock) || 0,
-              colors: Array.isArray(colors) ? colors : [],
-              colorStock: (colorStock && typeof colorStock === 'object') ? colorStock : null,
-            };
-          })
+        ? prodRes.data.map(fromProductRow)
         : (isCatalogInitialized ? [] : null);
 
       const newCustomers = custRes.data || [];
-      const newSales = (salesRes.data || []).map((s) => ({
-        ...s,
-        customerId: s.customer_id,
-        customerName: s.customer_name,
-        customerPhone: s.customer_phone,
-        paymentMethod: s.payment_method,
-        paidAtSale: Number(s.paid_at_sale) || 0,
-        remainingBalance: Number(s.remaining_balance) || 0,
-      }));
+      const newSales = (salesRes.data || []).map(fromSaleRow);
       const newFinance = (finRes.data || []).map((f) => ({
         ...f,
         amount: Number(f.amount) || 0,
@@ -276,6 +287,7 @@ export const StoreProvider = ({ children }) => {
         });
       }
 
+      lastSyncTimestampRef.current = Date.now();
       setIsCloudConnected(true);
       return true;
     } catch (err) {
@@ -285,63 +297,135 @@ export const StoreProvider = ({ children }) => {
         showToast(`⚠️ Falha ao sincronizar com a nuvem: ${err?.message || err}`, 'error');
       }
       return false;
+    } finally {
+      isSyncingRef.current = false;
     }
   };
 
-  // Real-time synchronization listeners and background polling
+  // Real-time synchronization listeners (zero-polling to save Supabase egress quota)
   useEffect(() => {
     // 1. Initial immediate sync on mount
     syncWithCloud({ silent: true });
 
     if (!isSupabaseConfigured() || !supabase) return;
 
-    // 2. Periodic polling every 5 seconds for guaranteed cross-device sync
-    const pollInterval = setInterval(() => {
-      syncWithCloud({ silent: true });
-    }, 5000);
-
-    // 3. Supabase Realtime WebSocket subscription for instant (< 1 second) updates
+    // 2. Supabase Realtime WebSocket subscription applying incremental row diffs directly
     let channel = null;
     try {
       channel = supabase
         .channel('store_realtime_channel')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, () => {
-          syncWithCloud({ silent: true });
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+          if (payload.eventType === 'DELETE' && payload.old?.id) {
+            setData((prev) => ({
+              ...prev,
+              products: prev.products.filter((p) => p.id !== payload.old.id),
+            }));
+          } else if (payload.new?.id) {
+            const parsed = fromProductRow(payload.new);
+            setData((prev) => {
+              const exists = prev.products.some((p) => p.id === parsed.id);
+              const specialPrice = prev.settings?.specialPrices?.[parsed.id] ?? parsed.specialPrice ?? null;
+              const itemWithSpecial = { ...parsed, specialPrice };
+              return {
+                ...prev,
+                products: exists
+                  ? prev.products.map((p) => (p.id === parsed.id ? { ...p, ...itemWithSpecial } : p))
+                  : [itemWithSpecial, ...prev.products],
+              };
+            });
+          }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, () => {
-          syncWithCloud({ silent: true });
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'store_settings' }, (payload) => {
+          if (payload.new?.data) {
+            const localPassword = localStorage.getItem('bazar_admin_password');
+            setData((prev) => ({
+              ...prev,
+              settings: {
+                ...prev.settings,
+                ...payload.new.data,
+                adminPassword: localPassword || payload.new.data.adminPassword || prev.settings.adminPassword,
+              },
+            }));
+          }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, () => {
-          syncWithCloud({ silent: true });
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'sales' }, (payload) => {
+          if (payload.eventType === 'DELETE' && payload.old?.id) {
+            setData((prev) => ({
+              ...prev,
+              sales: prev.sales.filter((s) => s.id !== payload.old.id),
+            }));
+          } else if (payload.new?.id) {
+            const parsed = fromSaleRow(payload.new);
+            setData((prev) => {
+              const exists = prev.sales.some((s) => s.id === parsed.id);
+              return {
+                ...prev,
+                sales: exists
+                  ? prev.sales.map((s) => (s.id === parsed.id ? { ...s, ...parsed } : s))
+                  : [parsed, ...prev.sales],
+              };
+            });
+          }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, () => {
-          syncWithCloud({ silent: true });
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, (payload) => {
+          if (payload.eventType === 'DELETE' && payload.old?.id) {
+            setData((prev) => ({
+              ...prev,
+              customers: prev.customers.filter((c) => c.id !== payload.old.id),
+            }));
+          } else if (payload.new?.id) {
+            setData((prev) => {
+              const exists = prev.customers.some((c) => c.id === payload.new.id);
+              return {
+                ...prev,
+                customers: exists
+                  ? prev.customers.map((c) => (c.id === payload.new.id ? { ...c, ...payload.new } : c))
+                  : [payload.new, ...prev.customers],
+              };
+            });
+          }
         })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_finance' }, () => {
-          syncWithCloud({ silent: true });
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_finance' }, (payload) => {
+          if (payload.eventType === 'DELETE' && payload.old?.id) {
+            setData((prev) => ({
+              ...prev,
+              personalFinance: prev.personalFinance.filter((f) => f.id !== payload.old.id),
+            }));
+          } else if (payload.new?.id) {
+            const parsed = { ...payload.new, amount: Number(payload.new.amount) || 0 };
+            setData((prev) => {
+              const exists = prev.personalFinance.some((f) => f.id === parsed.id);
+              return {
+                ...prev,
+                personalFinance: exists
+                  ? prev.personalFinance.map((f) => (f.id === parsed.id ? { ...f, ...parsed } : f))
+                  : [parsed, ...prev.personalFinance],
+              };
+            });
+          }
         })
         .subscribe();
     } catch (realtimeErr) {
       console.warn('Realtime subscription error:', realtimeErr);
     }
 
-    // 4. Instant sync whenever user switches to the tab or unlocks device
-    const handleFocusSync = () => {
-      syncWithCloud({ silent: true });
-    };
-    const handleVisibilitySync = () => {
+    // 3. Throttled sync on tab focus (at most once every 5 minutes to protect egress quota)
+    const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
+    const handleVisibilityOrFocus = () => {
       if (document.visibilityState === 'visible') {
-        syncWithCloud({ silent: true });
+        const now = Date.now();
+        if (now - lastSyncTimestampRef.current > SYNC_COOLDOWN_MS) {
+          syncWithCloud({ silent: true });
+        }
       }
     };
 
-    window.addEventListener('focus', handleFocusSync);
-    document.addEventListener('visibilitychange', handleVisibilitySync);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
 
     return () => {
-      clearInterval(pollInterval);
-      window.removeEventListener('focus', handleFocusSync);
-      document.removeEventListener('visibilitychange', handleVisibilitySync);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
       if (channel) {
         try {
           supabase.removeChannel(channel);
@@ -1081,7 +1165,11 @@ export const StoreProvider = ({ children }) => {
               updatedColorStock[chosenColor] = Math.max(0, updatedColorStock[chosenColor] - item.quantity);
             }
             const updatedProd = { ...prod, stock: newStk, colorStock: updatedColorStock };
-            await cloudWrite('estoque após venda', supabase.from('products').update(toProductRow(updatedProd)).eq('id', prod.id));
+            const row = toProductRow(updatedProd);
+            await cloudWrite(
+              'estoque após venda',
+              supabase.from('products').update({ stock: row.stock, description: row.description }).eq('id', prod.id)
+            );
           }
         }
       }
