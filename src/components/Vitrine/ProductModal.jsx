@@ -4,19 +4,38 @@ import { formatCurrency, generateWhatsAppLink } from '../../utils/formatters';
 import { X, ShoppingBag, MessageCircle, Check, Clock } from 'lucide-react';
 import { getPerfumeProfile } from '../../data/perfumesDb';
 
+const extractAvailableColors = (product) => {
+  if (!product) return [];
+  let displayDesc = product.description || '';
+  if (displayDesc.includes('||COLORS||')) {
+    const cParts = displayDesc.split('||COLORS||');
+    try {
+      const parsedColors = JSON.parse(cParts[1].split('||FRAG||')[0].split('||PROMO||')[0].split('||COLOR_STOCK||')[0]);
+      if (Array.isArray(parsedColors)) return parsedColors;
+    } catch (e) {}
+  } else if (product.colors && Array.isArray(product.colors)) {
+    return product.colors;
+  }
+  return [];
+};
+
 export const ProductModal = ({ product, onClose }) => {
   const { addToCart, settings } = useStore();
+  const availableColors = extractAvailableColors(product);
+
   const [selectedSize, setSelectedSize] = useState(
-    product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Único'
+    product?.sizes && product.sizes.length > 0 ? product.sizes[0] : 'Único'
   );
 
   const images = product?.image ? product.image.split('|||').filter(Boolean) : ['https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=700&auto=format&fit=crop&q=80'];
   const [activeImage, setActiveImage] = useState(images[0]);
+  const [selectedColor, setSelectedColor] = useState(
+    availableColors.length > 0 ? availableColors[0] : null
+  );
 
   if (!product) return null;
 
   let displayDesc = product.description || '';
-  let availableColors = [];
 
   let colorStock = product?.colorStock || null;
   if (displayDesc.includes('||COLOR_STOCK||')) {
@@ -31,12 +50,6 @@ export const ProductModal = ({ product, onClose }) => {
   if (displayDesc.includes('||COLORS||')) {
     const cParts = displayDesc.split('||COLORS||');
     displayDesc = cParts[0].trim();
-    try {
-      const parsedColors = JSON.parse(cParts[1].split('||FRAG||')[0].split('||PROMO||')[0].split('||COLOR_STOCK||')[0]);
-      availableColors = Array.isArray(parsedColors) ? parsedColors : [];
-    } catch (e) {}
-  } else if (product.colors && Array.isArray(product.colors)) {
-    availableColors = product.colors;
   }
 
   let originalPrice = product?.originalPrice || null;
@@ -51,10 +64,6 @@ export const ProductModal = ({ product, onClose }) => {
   const hasPromo = Boolean(originalPrice && originalPrice > product.price);
   const discountPct = hasPromo ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
   const discountDiff = hasPromo ? originalPrice - product.price : 0;
-
-  const [selectedColor, setSelectedColor] = useState(
-    availableColors.length > 0 ? availableColors[0] : null
-  );
 
   let customFrag = null;
   let customPerformance = null;
