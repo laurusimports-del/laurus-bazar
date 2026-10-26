@@ -20,7 +20,7 @@ import { useUser } from '../../context/UserContext';
 
 export const DevotionalsView = () => {
   const { currentProfileData, completeDevotional, currentProfileName } = useUser();
-  const [selectedDayId, setSelectedDayId] = useState('phil-4-6-7');
+  const [selectedDayId, setSelectedDayId] = useState(DEVOTIONALS_DATA[0]?.id || 'ezzo-cap-1');
   const [selectedWord, setSelectedWord] = useState(null);
   const [isReadingDevotional, setIsReadingDevotional] = useState(false);
   const [showDevotionalPt, setShowDevotionalPt] = useState(true);

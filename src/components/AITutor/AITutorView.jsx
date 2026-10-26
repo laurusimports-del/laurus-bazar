@@ -9,7 +9,11 @@ import {
   MessageSquare,
   BookOpen,
   Heart,
-  Plane
+  Plane,
+  Shield,
+  Coffee,
+  Compass,
+  Users
 } from 'lucide-react';
 import { askAITutor } from '../../services/geminiService';
 import { speechService } from '../../services/speechService';
@@ -21,7 +25,7 @@ export const AITutorView = ({ onOpenSettings }) => {
     {
       id: 1,
       sender: 'ai',
-      text: `Hello, ${currentProfileName}! I'm **Grace**, your personal English tutor. 🕊️\n\nEstou aqui para acompanhar você e seu amor nos estudos da Bíblia, vocabulário cristão, conversação do casal e correções de frases. Como posso abençoar o estudo de vocês hoje?`
+      text: `Hello, ${currentProfileName}! I'm **Grace**, your personal Christian English tutor. 🕊️\n\nEstou aqui para acompanhar você e seu amor nos estudos da Bíblia, vocabulário do casal e no currículo de **"Educação de Filhos à Maneira de Deus" (Capítulos 1 a 6)**. Como posso abençoar o estudo de vocês hoje?`
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -98,24 +102,39 @@ export const AITutorView = ({ onOpenSettings }) => {
 
   const starterChips = [
     {
-      icon: <Heart size={14} color="var(--color-rose)" />,
-      label: 'Frases de amor para o casal',
-      prompt: 'Grace, me ensine frases em inglês carinhosas e bíblicas para falar para meu cônjuge no dia a dia, com a pronúncia de cada uma.'
-    },
-    {
-      icon: <BookOpen size={14} color="var(--color-gold)" />,
-      label: 'Como orar em inglês',
-      prompt: 'Grace, como podemos orar juntos em inglês antes de dormir de forma simples e natural?'
+      icon: <Coffee size={14} color="var(--color-gold)" />,
+      label: '🛋️ Sofa Time & Casamento',
+      prompt: 'Grace, como podemos praticar em inglês a proteção do nosso "sofa time" e explicar aos filhos que papai e mamãe se amam primeiro?'
     },
     {
       icon: <Sparkles size={14} color="var(--color-primary)" />,
-      label: 'Praise vs Worship',
-      prompt: 'Grace, me explique a diferença entre Praise e Worship na prática e com exemplos?'
+      label: '🧠 Moral Reasons (Cap 1)',
+      prompt: 'Grace, como podemos ensinar "moral reasons" em inglês para nossos filhos em vez de dar ordens secas? Nos dê 3 exemplos práticos bíblicos com pronúncia.'
     },
     {
-      icon: <Plane size={14} color="var(--color-emerald)" />,
-      label: 'Viagem a dois em inglês',
-      prompt: 'Grace, nos dê 5 frases essenciais em inglês para usar em um restaurante ou aeroporto durante uma viagem de casal!'
+      icon: <Heart size={14} color="var(--color-rose)" />,
+      label: '❤️ 5 Linguagens do Amor (Cap 3)',
+      prompt: 'Grace, me ensine frases em inglês para as 5 Linguagens do Amor com meu cônjuge e com os filhos, para manter o "emotional tank" sempre cheio.'
+    },
+    {
+      icon: <Shield size={14} color="var(--color-emerald)" />,
+      label: '🛡️ O Mandato do Pai (Cap 4)',
+      prompt: 'Grace, como o pai pode orar em inglês sobre a identidade da família e abençoar os filhos com um tom de voz manso e encorajador?'
+    },
+    {
+      icon: <Compass size={14} color="#6366f1" />,
+      label: '⚖️ Consciência Moral (Cap 5)',
+      prompt: 'Grace, me explique em inglês como abastecer o "moral warehouse" dos nossos filhos para que tenham uma consciência moral iluminada pela verdade.'
+    },
+    {
+      icon: <Users size={14} color="#f59e0b" />,
+      label: '👑 Liderança por Influência (Cap 6)',
+      prompt: 'Grace, me ensine frases em inglês para orientar filhos e adolescentes através da "leadership by influence" e inspirar respeito voluntário.'
+    },
+    {
+      icon: <BookOpen size={14} color="var(--color-gold)" />,
+      label: '🙏 Como orar em inglês a dois',
+      prompt: 'Grace, como podemos orar juntos em inglês antes de dormir de forma simples, sincera e natural?'
     }
   ];
 
