@@ -1,5 +1,14 @@
 /* Grace & Fluency Global Styles */
 
+html,
+body,
+#root,
+.app-container {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
 .app-container {
   display: flex;
   flex-direction: column;
@@ -13,6 +22,7 @@
   width: 100%;
   margin: 0 auto;
   padding: 1.5rem 1rem 4rem;
+  box-sizing: border-box;
 }
 
 /* Glassmorphism Cards */
@@ -269,6 +279,73 @@ button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
   display: flex;
 }
 
+/* Header Responsive Layout */
+.header-inner {
+  max-width: 1140px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0.65rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  box-sizing: border-box;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  cursor: pointer;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.brand-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 1.18rem;
+  letter-spacing: -0.02em;
+  color: var(--color-text-main);
+  line-height: 1.1;
+}
+
+.brand-subtitle {
+  font-size: 0.68rem;
+  color: var(--color-gold);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+}
+
+.profile-switch-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--border-radius-full);
+  background: var(--bg-app);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  max-width: 130px;
+}
+
+.profile-switch-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  max-width: 75px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 768px) {
   /* Prevent iOS Safari 16px auto-zoom bug when focusing inputs */
   input[type="text"],
@@ -285,11 +362,52 @@ button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
     display: none !important;
   }
 
+  /* Header adjustments for iPhone */
+  .header-inner {
+    padding: 0.4rem 0.65rem !important;
+    gap: 0.35rem !important;
+  }
+
+  .brand-subtitle {
+    display: none !important;
+  }
+
+  .brand-title {
+    font-size: 1.05rem !important;
+    white-space: nowrap;
+  }
+
+  /* Hide desktop-only buttons to prevent header blowout */
+  .desktop-only-btn {
+    display: none !important;
+  }
+
+  .header-controls {
+    gap: 0.3rem !important;
+  }
+
+  .streak-pill {
+    padding: 0.28rem 0.55rem !important;
+    font-size: 0.74rem !important;
+    gap: 0.2rem !important;
+  }
+
+  .profile-switch-btn {
+    padding: 0.3rem 0.5rem !important;
+    gap: 0.25rem !important;
+    max-width: 100px !important;
+  }
+
+  .profile-switch-name {
+    max-width: 58px !important;
+    font-size: 0.75rem !important;
+  }
+
   /* Top sticky header safe area for iPhone Notch / Dynamic Island */
   header {
     padding-top: max(0.55rem, env(safe-area-inset-top, 0px)) !important;
-    padding-left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
-    padding-right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
+    padding-left: max(0.65rem, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(0.65rem, env(safe-area-inset-right, 0px)) !important;
   }
 
   /* Main content padding accounting for iPhone Home Indicator bar */
@@ -298,6 +416,7 @@ button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
     padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
     padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+    overflow-x: hidden;
   }
 
   /* Native Mobile Bottom Navigation Bar for iPhone */
@@ -322,6 +441,9 @@ button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
     padding-right: max(0.35rem, env(safe-area-inset-right, 0px));
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 
   .mobile-bottom-nav::-webkit-scrollbar {
@@ -334,7 +456,7 @@ button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
     align-items: center;
     justify-content: center;
     gap: 2px;
-    min-width: 64px;
+    min-width: 62px;
     flex-shrink: 0;
     height: 100%;
     color: var(--color-text-muted);
@@ -380,13 +502,15 @@ button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
 
   /* Optimized typography for iPhone screens (iPhone SE through 16 Pro Max) */
   h1 {
-    font-size: 1.5rem !important;
+    font-size: 1.35rem !important;
     line-height: 1.25 !important;
+    word-break: break-word;
   }
 
   h2 {
-    font-size: 1.25rem !important;
+    font-size: 1.18rem !important;
     line-height: 1.3 !important;
+    word-break: break-word;
   }
 
   /* Interactive scripture verse size on mobile */
@@ -407,4 +531,5 @@ button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
     font-size: 0.88rem;
   }
 }
+
 

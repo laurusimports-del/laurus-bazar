@@ -11,7 +11,8 @@ import {
   ExternalLink,
   Sparkles,
   ShieldCheck,
-  RotateCcw
+  RotateCcw,
+  LogOut
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { speechService } from '../../services/speechService';
@@ -25,7 +26,8 @@ export const SettingsModal = ({ isOpen, onClose }) => {
     currentProfileName,
     resetProfileProgress,
     updateCoupleNames, 
-    triggerCelebration 
+    triggerCelebration,
+    logout
   } = useUser();
 
   const [husbandName, setHusbandName] = useState('');
@@ -383,6 +385,40 @@ export const SettingsModal = ({ isOpen, onClose }) => {
             >
               <RotateCcw size={13} />
               Zerar Progresso
+            </button>
+          </div>
+
+          {/* Sair da Conta / Trocar de Usuário */}
+          <div style={{
+            background: 'rgba(225, 29, 72, 0.05)',
+            border: '1px solid rgba(225, 29, 72, 0.2)',
+            borderRadius: 'var(--border-radius-md)',
+            padding: '0.85rem 1rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.5rem'
+          }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--color-rose)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <LogOut size={15} />
+                Encerrar Sessão / Trocar de Conta
+              </div>
+              <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)' }}>
+                Desconecta deste dispositivo e retorna para a tela inicial de acesso.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                onClose();
+                logout();
+              }}
+              className="btn btn-outline"
+              style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', borderColor: 'var(--color-rose)', color: 'var(--color-rose)' }}
+            >
+              Sair da Conta
             </button>
           </div>
 

@@ -66,23 +66,15 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
         zIndex: 100,
         boxShadow: 'var(--shadow-sm)'
       }}>
-        <div style={{
-          maxWidth: '1140px',
-          margin: '0 auto',
-          padding: '0.65rem 1rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '0.75rem'
-        }}>
+        <div className="header-inner">
           {/* Brand Logo */}
           <div 
             onClick={() => onSelectTab('devotionals')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', cursor: 'pointer' }}
+            className="header-brand"
           >
             <div style={{
-              width: '36px',
-              height: '36px',
+              width: '34px',
+              height: '34px',
               borderRadius: '10px',
               background: 'linear-gradient(135deg, #312e81 0%, #b45309 100%)',
               display: 'flex',
@@ -92,27 +84,20 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
               boxShadow: 'var(--shadow-gold)',
               flexShrink: 0
             }}>
-              <Sparkles size={18} />
+              <Sparkles size={17} />
             </div>
             <div>
-              <div style={{ 
-                fontFamily: 'var(--font-heading)', 
-                fontWeight: 800, 
-                fontSize: '1.18rem', 
-                letterSpacing: '-0.02em',
-                color: 'var(--color-text-main)',
-                lineHeight: 1.1
-              }}>
+              <div className="brand-title">
                 Adam's & Fluency
               </div>
-              <div style={{ fontSize: '0.68rem', color: 'var(--color-gold)', fontWeight: 700, letterSpacing: '0.04em' }}>
+              <div className="brand-subtitle">
                 INGLÊS & FÉ EM CASAL
               </div>
             </div>
           </div>
 
           {/* Right Header Controls: Streak, Profile Switcher & Actions */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+          <div className="header-controls">
             {/* Streak indicator */}
             <div className="streak-pill" title="Ofensiva de dias consecutivos">
               <Flame size={14} fill="currentColor" />
@@ -122,53 +107,44 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
             {/* Quick Toggle Profile */}
             <button
               onClick={handleToggleProfile}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.35rem 0.65rem',
-                borderRadius: 'var(--border-radius-full)',
-                background: 'var(--bg-app)',
-                border: '1px solid var(--border-color)',
-                cursor: 'pointer'
-              }}
+              className="profile-switch-btn"
               title={`Trocar para perfil de ${spouseProfileName}`}
             >
-              <span style={{ fontSize: '1.15rem' }}>{currentProfileEmoji}</span>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-main)', maxWidth: '75px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '1.1rem' }}>{currentProfileEmoji}</span>
+              <span className="profile-switch-name">
                 {currentProfileName}
               </span>
-              <Repeat size={12} color="var(--color-gold)" />
+              <Repeat size={11} color="var(--color-gold)" />
             </button>
 
-            {/* Theme Toggle */}
+            {/* Theme Toggle (Desktop) */}
             <button
               onClick={handleToggleTheme}
-              className="btn btn-outline"
-              style={{ padding: '0.45rem', borderRadius: '50%', minHeight: '36px', width: '36px' }}
+              className="btn btn-outline desktop-only-btn"
+              style={{ padding: '0.45rem', borderRadius: '50%', minHeight: '34px', width: '34px' }}
               title="Alternar tema claro/noturno"
             >
-              {settings.themeMode === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              {settings.themeMode === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
             </button>
 
             {/* Settings */}
             <button
               onClick={onOpenSettings}
               className="btn btn-outline"
-              style={{ padding: '0.45rem', borderRadius: '50%', minHeight: '36px', width: '36px' }}
+              style={{ padding: '0.45rem', borderRadius: '50%', minHeight: '34px', width: '34px' }}
               title="Configurações da conta e IA"
             >
-              <Settings size={16} />
+              <Settings size={15} />
             </button>
 
-            {/* Logout / Switch Accounts Screen */}
+            {/* Logout / Switch Accounts Screen (Desktop) */}
             <button
               onClick={logout}
-              className="btn btn-outline"
-              style={{ padding: '0.45rem', borderRadius: '50%', minHeight: '36px', width: '36px' }}
+              className="btn btn-outline desktop-only-btn"
+              style={{ padding: '0.45rem', borderRadius: '50%', minHeight: '34px', width: '34px' }}
               title="Trocar de Conta / Tela de Usuários"
             >
-              <LogOut size={16} color="var(--color-rose)" />
+              <LogOut size={15} color="var(--color-rose)" />
             </button>
           </div>
         </div>

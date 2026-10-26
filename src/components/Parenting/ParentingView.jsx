@@ -117,6 +117,10 @@ export const ParentingView = () => {
         display: 'flex',
         gap: '0.65rem',
         overflowX: 'auto',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        WebkitOverflowScrolling: 'touch',
         paddingBottom: '0.75rem',
         marginBottom: '1.5rem',
         scrollbarWidth: 'thin'

@@ -83,7 +83,7 @@ export const BibleView = () => {
     <div>
       {/* Header */}
       <div style={{ marginBottom: '1.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
           <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <BookOpen size={13} />
             Bíblia Sagrada Bilíngue • Holy Bible
@@ -92,7 +92,7 @@ export const BibleView = () => {
             NIV (English) • NVI (Português)
           </span>
         </div>
-        <h1 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
+        <h1 style={{ fontSize: '1.85rem', fontWeight: 800, marginBottom: '0.35rem', wordBreak: 'break-word' }}>
           Palavra de Deus & Pesquisa Bíblica
         </h1>
         <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)', maxWidth: '780px' }}>
@@ -159,6 +159,10 @@ export const BibleView = () => {
         display: 'flex',
         gap: '0.5rem',
         overflowX: 'auto',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        WebkitOverflowScrolling: 'touch',
         paddingBottom: '0.65rem',
         marginBottom: '1rem',
         scrollbarWidth: 'none'
@@ -197,6 +201,10 @@ export const BibleView = () => {
         display: 'flex',
         gap: '0.45rem',
         overflowX: 'auto',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        WebkitOverflowScrolling: 'touch',
         paddingBottom: '0.65rem',
         marginBottom: '1.75rem',
         scrollbarWidth: 'none'
@@ -232,7 +240,11 @@ export const BibleView = () => {
           marginBottom: '2rem',
           background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(49, 46, 129, 0.08) 100%)',
           border: '1.5px solid var(--color-gold)',
-          boxShadow: 'var(--shadow-md)'
+          boxShadow: 'var(--shadow-md)',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
