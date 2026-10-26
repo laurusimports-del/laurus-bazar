@@ -20,12 +20,18 @@ import { useUser } from '../../context/UserContext';
 
 export const DevotionalsView = () => {
   const { currentProfileData, completeDevotional, currentProfileName } = useUser();
+  const [selectedTrack, setSelectedTrack] = useState('all'); // 'all', 'marriage', 'parenting'
   const [selectedDayId, setSelectedDayId] = useState(DEVOTIONALS_DATA[0]?.id || 'phil-4-6-7');
   const [selectedWord, setSelectedWord] = useState(null);
   const [isReadingDevotional, setIsReadingDevotional] = useState(false);
   const [showDevotionalPt, setShowDevotionalPt] = useState(true);
 
-  const activeDevotional = DEVOTIONALS_DATA.find(d => d.id === selectedDayId) || DEVOTIONALS_DATA[0];
+  const filteredDevotionals = DEVOTIONALS_DATA.filter(item => {
+    if (selectedTrack === 'all') return true;
+    return item.track === selectedTrack;
+  });
+
+  const activeDevotional = DEVOTIONALS_DATA.find(d => d.id === selectedDayId) || filteredDevotionals[0] || DEVOTIONALS_DATA[0];
   const completedList = currentProfileData?.completed_devotionals || currentProfileData?.completedDevotionals || [];
   const isCompleted = completedList.includes(activeDevotional.id);
 
@@ -79,7 +85,7 @@ export const DevotionalsView = () => {
             Faith & Scripture
           </span>
           <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-            Estudo Bíblico Bilíngue
+            Estudo Bíblico Intercalado (Casamento & Educação de Filhos)
           </span>
         </div>
         <h1 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
@@ -88,6 +94,31 @@ export const DevotionalsView = () => {
         <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)' }}>
           Toque em qualquer palavra em destaque para ouvir a pronúncia em inglês nativo, ver o significado e salvar em seus flashcards.
         </p>
+      </div>
+
+      {/* Interleaving Track Filters */}
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <button
+          onClick={() => setSelectedTrack('all')}
+          className={`btn ${selectedTrack === 'all' ? 'btn-gold' : 'btn-outline'}`}
+          style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
+        >
+          🔄 Todos os Dias (16 Dias Intercalados)
+        </button>
+        <button
+          onClick={() => setSelectedTrack('marriage')}
+          className={`btn ${selectedTrack === 'marriage' ? 'btn-gold' : 'btn-outline'}`}
+          style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
+        >
+          💍 Casamento & Fé (Dias Ímpares)
+        </button>
+        <button
+          onClick={() => setSelectedTrack('parenting')}
+          className={`btn ${selectedTrack === 'parenting' ? 'btn-gold' : 'btn-outline'}`}
+          style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
+        >
+          👨‍👩‍👧‍👦 Família & Filhos (Dias Pares)
+        </button>
       </div>
 
       {/* Devotionals Carousel / Day Selector */}
@@ -103,7 +134,7 @@ export const DevotionalsView = () => {
         marginBottom: '1.5rem',
         scrollbarWidth: 'thin'
       }}>
-        {DEVOTIONALS_DATA.map((item) => {
+        {filteredDevotionals.map((item) => {
           const isCurrent = item.id === activeDevotional.id;
           const isDone = completedList.includes(item.id);
 
@@ -129,7 +160,7 @@ export const DevotionalsView = () => {
                   ? 'var(--bg-surface)' 
                   : 'var(--bg-card)',
                 boxShadow: isCurrent ? 'var(--shadow-md)' : 'none',
-                minWidth: '180px',
+                minWidth: '190px',
                 textAlign: 'left',
                 position: 'relative',
                 transition: 'all 0.2s'
@@ -140,9 +171,9 @@ export const DevotionalsView = () => {
                   fontSize: '0.72rem', 
                   fontWeight: 800, 
                   textTransform: 'uppercase',
-                  color: isCurrent ? 'var(--color-gold)' : 'var(--color-text-muted)' 
+                  color: isCurrent ? 'var(--color-gold)' : (item.track === 'parenting' ? 'var(--color-emerald)' : 'var(--color-primary)')
                 }}>
-                  Dia {item.day}
+                  Dia {item.day} • {item.trackLabel || (item.day % 2 === 0 ? 'Família & Filhos' : 'Casamento & Fé')}
                 </span>
                 {isDone && (
                   <CheckCircle size={14} color="var(--color-emerald)" />

@@ -14,7 +14,7 @@ import {
   LogOut,
   Repeat,
   ShieldCheck,
-  Users
+  Newspaper
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
@@ -47,7 +47,7 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
   const navItems = [
     { id: 'bible', label: 'Bíblia', icon: <BookOpen size={17} /> },
     { id: 'devotionals', label: 'Devocionais', icon: <Heart size={17} /> },
-    { id: 'parenting', label: 'Educação de Filhos', icon: <Users size={17} /> },
+    { id: 'news', label: 'Notícias', icon: <Newspaper size={17} /> },
     { id: 'flashcards', label: 'Memorização', icon: <Layers size={17} /> },
     { id: 'ai-tutor', label: 'Tutor IA', icon: <Bot size={17} /> },
     { id: 'worship', label: 'Louvores', icon: <Music size={17} /> },

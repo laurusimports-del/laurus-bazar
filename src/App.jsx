@@ -4,6 +4,7 @@ import { Navbar } from './components/Navbar/Navbar';
 import { AuthScreen } from './components/Auth/AuthScreen';
 import { BibleView } from './components/Bible/BibleView';
 import { DevotionalsView } from './components/Devotionals/DevotionalsView';
+import { NewsView } from './components/News/NewsView';
 import { ParentingView } from './components/Parenting/ParentingView';
 import { FlashcardsView } from './components/Flashcards/FlashcardsView';
 import { ProgressView } from './components/Progress/ProgressView';
@@ -174,6 +175,7 @@ const MainApp = () => {
       <main className="main-content">
         {activeTab === 'bible' && <BibleView />}
         {activeTab === 'devotionals' && <DevotionalsView />}
+        {activeTab === 'news' && <NewsView />}
         {activeTab === 'parenting' && <ParentingView />}
         {activeTab === 'flashcards' && <FlashcardsView />}
         {activeTab === 'ai-tutor' && <AITutorView onOpenSettings={() => setIsSettingsOpen(true)} />}

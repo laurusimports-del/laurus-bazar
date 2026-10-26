@@ -25,7 +25,7 @@ export const AITutorView = ({ onOpenSettings }) => {
     {
       id: 1,
       sender: 'ai',
-      text: `Hello, ${currentProfileName}! I'm **Grace**, your personal Christian English tutor. 🕊️\n\nEstou aqui para acompanhar você e seu amor nos estudos da Bíblia, vocabulário do casal e no currículo de **"Educação de Filhos à Maneira de Deus" (Capítulos 1 a 6)**. Como posso abençoar o estudo de vocês hoje?`
+      text: `Hello, ${currentProfileName}! I'm **Grace**, your personal Christian English tutor. 🕊️\n\nEstou aqui para acompanhar você e seu amor nos estudos da Bíblia, vocabulário do casal, leitura de **notícias internacionais** (tecnologia, finanças e política) e princípios de **educação de filhos e família**. Como posso abençoar o estudo de vocês hoje?`
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -102,39 +102,34 @@ export const AITutorView = ({ onOpenSettings }) => {
 
   const starterChips = [
     {
+      icon: <Sparkles size={14} color="#6366f1" />,
+      label: '📰 Notícias & Mercado Global',
+      prompt: 'Grace, como posso discutir notícias internacionais de tecnologia, inteligência artificial e economia em inglês? Me ensine 5 termos essenciais com pronúncia.'
+    },
+    {
+      icon: <Shield size={14} color="var(--color-emerald)" />,
+      label: '🛡️ Filho Rebelde & Limites com Amor',
+      prompt: 'Grace, como conversar com um filho rebelde em inglês usando amor bíblico, firmeza moral e restauração de aliança? Me dê frases práticas de exemplo.'
+    },
+    {
       icon: <Coffee size={14} color="var(--color-gold)" />,
       label: '🛋️ Sofa Time & Casamento',
       prompt: 'Grace, como podemos praticar em inglês a proteção do nosso "sofa time" e explicar aos filhos que papai e mamãe se amam primeiro?'
     },
     {
-      icon: <Sparkles size={14} color="var(--color-primary)" />,
-      label: '🧠 Moral Reasons (Cap 1)',
-      prompt: 'Grace, como podemos ensinar "moral reasons" em inglês para nossos filhos em vez de dar ordens secas? Nos dê 3 exemplos práticos bíblicos com pronúncia.'
-    },
-    {
       icon: <Heart size={14} color="var(--color-rose)" />,
-      label: '❤️ 5 Linguagens do Amor (Cap 3)',
-      prompt: 'Grace, me ensine frases em inglês para as 5 Linguagens do Amor com meu cônjuge e com os filhos, para manter o "emotional tank" sempre cheio.'
-    },
-    {
-      icon: <Shield size={14} color="var(--color-emerald)" />,
-      label: '🛡️ O Mandato do Pai (Cap 4)',
-      prompt: 'Grace, como o pai pode orar em inglês sobre a identidade da família e abençoar os filhos com um tom de voz manso e encorajador?'
-    },
-    {
-      icon: <Compass size={14} color="#6366f1" />,
-      label: '⚖️ Consciência Moral (Cap 5)',
-      prompt: 'Grace, me explique em inglês como abastecer o "moral warehouse" dos nossos filhos para que tenham uma consciência moral iluminada pela verdade.'
-    },
-    {
-      icon: <Users size={14} color="#f59e0b" />,
-      label: '👑 Liderança por Influência (Cap 6)',
-      prompt: 'Grace, me ensine frases em inglês para orientar filhos e adolescentes através da "leadership by influence" e inspirar respeito voluntário.'
+      label: '❤️ 5 Linguagens do Amor no Lar',
+      prompt: 'Grace, me ensine frases em inglês para aplicar as 5 Linguagens do Amor com meu cônjuge e com os filhos, abastecendo o "emotional tank" de cada um.'
     },
     {
       icon: <BookOpen size={14} color="var(--color-gold)" />,
       label: '🙏 Como orar em inglês a dois',
-      prompt: 'Grace, como podemos orar juntos em inglês antes de dormir de forma simples, sincera e natural?'
+      prompt: 'Grace, como podemos orar juntos em inglês antes de dormir abençoando nosso casamento e nossos filhos de forma simples, sincera e natural?'
+    },
+    {
+      icon: <Compass size={14} color="#f59e0b" />,
+      label: '🧠 Razões Morais (Moral Reasons)',
+      prompt: 'Grace, como ensinar "moral reasons" em inglês em vez de apenas dar ordens secas? Nos dê exemplos práticos do dia a dia da família.'
     }
   ];
 
