@@ -262,16 +262,42 @@ export const UserProvider = ({ children }) => {
   // PROGRESSO (cada ação grava no Supabase)
   // ---------------------------------------------------------------------------
 
-  const updateProfileProgress = (updaterFn) => {
+  const updateProfileProgress = (updaterFn, targetRole = null) => {
     const prev = sessionRef.current;
     if (!prev?.couple?.id) return;
-    const role = currentRole;
+    const role = targetRole || currentRole;
     const before = prev.profiles?.[role] || EMPTY_PROFILE;
     const after = updaterFn(before);
     if (after === before) return;
 
     applySession({ ...prev, profiles: { ...prev.profiles, [role]: after } });
     trackSave(dbService.saveProfileProgress(prev.couple.id, role, after));
+  };
+
+  const resetProfileProgress = (targetRole = null) => {
+    const role = targetRole || currentRole;
+    updateProfileProgress(profile => {
+      const cleanCards = (profile.flashcards || []).map(c => ({
+        ...c,
+        box: 1,
+        lastReviewed: null,
+        nextReviewDate: new Date().toISOString()
+      }));
+      return {
+        ...profile,
+        streak: 0,
+        points: 0,
+        last_study_date: null,
+        completed_devotionals: [],
+        completedDevotionals: [],
+        memorized_verses: [],
+        completed_quizzes: [],
+        completedQuizzes: [],
+        favorite_songs: [],
+        study_history: [],
+        flashcards: cleanCards
+      };
+    }, role);
   };
 
   const updateCouple = (changes) => {
@@ -447,6 +473,7 @@ export const UserProvider = ({ children }) => {
         updateSettings,
         updateLoveNote,
         updateCoupleNames,
+        resetProfileProgress,
         triggerCelebration
       }}
     >

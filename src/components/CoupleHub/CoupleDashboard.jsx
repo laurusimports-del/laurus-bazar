@@ -44,7 +44,15 @@ export const CoupleDashboard = () => {
     ...(husbandData?.memorized_verses || []),
     ...(wifeData?.memorized_verses || [])
   ]).size;
-  const totalFlashcards = (husbandData?.flashcards?.length || 0) + (wifeData?.flashcards?.length || 0);
+
+  const getReviewedCount = (profile) => {
+    const cards = profile?.flashcards || [];
+    return cards.filter(c => c.lastReviewed != null || (c.box && c.box > 1)).length;
+  };
+
+  const husbandReviewedCount = getReviewedCount(husbandData);
+  const wifeReviewedCount = getReviewedCount(wifeData);
+  const totalReviewedCards = husbandReviewedCount + wifeReviewedCount;
 
   const handleSaveNote = () => {
     updateLoveNote(noteText);
@@ -58,7 +66,7 @@ export const CoupleDashboard = () => {
       title: 'Primeiro Devocional Juntos',
       desc: 'Completaram o primeiro estudo bíblico em inglês',
       icon: '📖',
-      unlocked: (husbandData?.completed_devotionals?.length > 0) && (wifeData?.completed_devotionals?.length > 0)
+      unlocked: ((husbandData?.completed_devotionals?.length || 0) > 0) && ((wifeData?.completed_devotionals?.length || 0) > 0)
     },
     {
       id: 'streak-3',
@@ -72,14 +80,14 @@ export const CoupleDashboard = () => {
       title: 'Vozes em Harmonia',
       desc: 'Aprenderam e favoritaram louvores em inglês',
       icon: '🎵',
-      unlocked: (husbandData?.favorite_songs?.length > 0) || (wifeData?.favorite_songs?.length > 0)
+      unlocked: ((husbandData?.favorite_songs?.length || 0) > 0) || ((wifeData?.favorite_songs?.length || 0) > 0)
     },
     {
       id: 'vocab-builders',
       title: 'Mente Renovada',
-      desc: 'Mais de 10 palavras bíblicas salvas no baralho',
+      desc: 'Memorizaram mais de 10 palavras bíblicas nos estudos',
       icon: '🧠',
-      unlocked: totalFlashcards >= 10
+      unlocked: totalReviewedCards >= 10
     }
   ];
 
@@ -202,8 +210,8 @@ export const CoupleDashboard = () => {
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Devocionais</div>
             </div>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{husbandData?.flashcards?.length || 0}</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Flashcards</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{husbandReviewedCount}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Cards Praticados</div>
             </div>
           </div>
         </div>
@@ -230,8 +238,8 @@ export const CoupleDashboard = () => {
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Devocionais</div>
             </div>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{wifeData?.flashcards?.length || 0}</div>
-              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Flashcards</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{wifeReviewedCount}</div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Cards Praticados</div>
             </div>
           </div>
         </div>

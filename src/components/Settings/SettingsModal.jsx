@@ -10,13 +10,23 @@ import {
   Check, 
   ExternalLink,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  RotateCcw
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { speechService } from '../../services/speechService';
 
 export const SettingsModal = ({ isOpen, onClose }) => {
-  const { settings, updateSettings, currentCouple, isAdmin, updateCoupleNames, triggerCelebration } = useUser();
+  const { 
+    settings, 
+    updateSettings, 
+    currentCouple, 
+    isAdmin, 
+    currentProfileName,
+    resetProfileProgress,
+    updateCoupleNames, 
+    triggerCelebration 
+  } = useUser();
 
   const [husbandName, setHusbandName] = useState('');
   const [wifeName, setWifeName] = useState('');
@@ -338,6 +348,43 @@ export const SettingsModal = ({ isOpen, onClose }) => {
               </button>
             </div>
           )}
+
+          {/* Zerar progresso de testes */}
+          <div style={{
+            background: 'var(--bg-app)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--border-radius-md)',
+            padding: '0.85rem 1rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '0.5rem'
+          }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--color-text-main)' }}>
+                Zerar Meu Progresso de Testes ({currentProfileName})
+              </div>
+              <div style={{ fontSize: '0.73rem', color: 'var(--color-text-muted)' }}>
+                Limpa os pontos e devocionais de teste para você começar 100% zerado.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (window.confirm(`Deseja zerar os pontos e devocionais de teste do perfil de ${currentProfileName}?`)) {
+                  resetProfileProgress();
+                  onClose();
+                  alert('Progresso zerado com sucesso! Agora você começa do zero oficial.');
+                }
+              }}
+              className="btn btn-outline"
+              style={{ fontSize: '0.76rem', padding: '0.35rem 0.75rem', borderColor: 'var(--color-rose)', color: 'var(--color-rose)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+            >
+              <RotateCcw size={13} />
+              Zerar Progresso
+            </button>
+          </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
             <button type="button" className="btn btn-outline" onClick={onClose}>
