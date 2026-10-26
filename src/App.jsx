@@ -10,16 +10,64 @@ import { AITutorView } from './components/AITutor/AITutorView';
 import { CoupleDashboard } from './components/CoupleHub/CoupleDashboard';
 import { AdminPanel } from './components/Admin/AdminPanel';
 import { SettingsModal } from './components/Settings/SettingsModal';
-import { Heart } from 'lucide-react';
+import { Heart, LogOut, ShieldCheck } from 'lucide-react';
 import './styles/theme.css';
 import './styles/app.css';
 
 const MainApp = () => {
   const [activeTab, setActiveTab] = useState('devotionals');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { isAuthenticated, isAdmin, currentProfileName, spouseProfileName } = useUser();
+  const { 
+    isAuthenticated, 
+    isAdmin, 
+    isMasterAdminOnly, 
+    logout, 
+    currentProfileName, 
+    spouseProfileName 
+  } = useUser();
 
-  // If user is logged out, show the couple authentication & profile selection screen
+  // Se logado no Modo Administrador Dedicado (sem casal ativo)
+  if (isMasterAdminOnly) {
+    return (
+      <div className="app-container">
+        <header style={{
+          background: 'var(--bg-surface)',
+          borderBottom: '1px solid var(--border-color)',
+          padding: '0.85rem 1.5rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          position: 'sticky',
+          top: 0,
+          zIndex: 100,
+          boxShadow: 'var(--shadow-sm)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+            <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+              <ShieldCheck size={14} />
+              Painel do Administrador Mestre
+            </span>
+            <span style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--color-text-main)' }}>
+              Grace & Fluency
+            </span>
+          </div>
+          <button 
+            onClick={logout} 
+            className="btn btn-outline" 
+            style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            <LogOut size={14} color="var(--color-rose)" />
+            Encerrar Sessão Admin
+          </button>
+        </header>
+        <main className="main-content">
+          <AdminPanel />
+        </main>
+      </div>
+    );
+  }
+
+  // Se usuário não está autenticado, exibe a tela de login/cadastro
   if (!isAuthenticated) {
     return <AuthScreen />;
   }
@@ -44,7 +92,7 @@ const MainApp = () => {
         {activeTab === 'admin' && isAdmin && <AdminPanel />}
       </main>
 
-      {/* Footer (Subtle on mobile, desktop friendly) */}
+      {/* Footer */}
       <footer style={{
         borderTop: '1px solid var(--border-color)',
         background: 'var(--bg-surface)',

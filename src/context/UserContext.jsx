@@ -6,6 +6,7 @@ const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [session, setSession] = useState(() => dbService.getLocalSession());
+  const [adminSession, setAdminSession] = useState(() => dbService.getAdminSession());
   const [activeRole, setActiveRole] = useState('husband'); // 'husband' | 'wife'
   const [settings, setSettings] = useState(() => {
     try {
@@ -32,7 +33,8 @@ export const UserProvider = ({ children }) => {
   // Derived properties from active session
   const isAuthenticated = Boolean(session && session.couple && session.couple.id);
   const currentCouple = session?.couple || null;
-  const isAdmin = Boolean(currentCouple?.is_admin);
+  const isAdmin = Boolean(currentCouple?.is_admin || adminSession?.isAdmin);
+  const isMasterAdminOnly = Boolean(!isAuthenticated && adminSession?.isAdmin);
 
   const currentRole = activeRole;
   const spouseRole = currentRole === 'husband' ? 'wife' : 'husband';
@@ -106,10 +108,22 @@ export const UserProvider = ({ children }) => {
     return res;
   };
 
-  const loginCouple = async (pin) => {
-    const res = await dbService.loginCouple(pin);
+  const loginCouple = async (email, password) => {
+    const res = await dbService.loginCouple(email, password);
     if (res.success && res.data) {
       setSession(res.data);
+      triggerCelebration();
+    }
+    return res;
+  };
+
+  const loginAdmin = async (emailOrUser, password) => {
+    const res = await dbService.loginAdmin(emailOrUser, password);
+    if (res.success && res.adminSession) {
+      setAdminSession(res.adminSession);
+      if (res.adminSession.coupleData) {
+        setSession(res.adminSession.coupleData);
+      }
       triggerCelebration();
     }
     return res;
@@ -118,6 +132,7 @@ export const UserProvider = ({ children }) => {
   const logout = () => {
     dbService.clearLocalSession();
     setSession(null);
+    setAdminSession(null);
   };
 
   const switchProfile = (targetRole) => {
@@ -347,6 +362,8 @@ export const UserProvider = ({ children }) => {
         isAuthenticated,
         currentCouple,
         isAdmin,
+        isMasterAdminOnly,
+        adminSession,
         currentRole,
         spouseRole,
         currentProfileData,
@@ -359,6 +376,7 @@ export const UserProvider = ({ children }) => {
         settings,
         registerCouple,
         loginCouple,
+        loginAdmin,
         logout,
         switchProfile,
         completeDevotional,

@@ -9,7 +9,9 @@ import {
   Unlock, 
   Sparkles, 
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  Mail,
+  UserCheck
 } from 'lucide-react';
 import { dbService } from '../../services/dbService';
 import { useUser } from '../../context/UserContext';
@@ -20,6 +22,8 @@ export const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [masterCode, setMasterCode] = useState('');
   const [requireApproval, setRequireApproval] = useState(true);
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [updatingCoupleId, setUpdatingCoupleId] = useState(null);
 
@@ -33,6 +37,8 @@ export const AdminPanel = () => {
       setCouples(couplesList || []);
       setMasterCode(config?.master_invite_code || 'GRACE2026');
       setRequireApproval(config?.require_admin_approval ?? true);
+      setAdminEmail(config?.admin_email || 'admin@gracefluency.com');
+      setAdminPassword(config?.admin_password || 'admin2026');
     } catch (e) {
       console.error(e);
     } finally {
@@ -48,7 +54,9 @@ export const AdminPanel = () => {
     e.preventDefault();
     await dbService.updateSystemConfig({
       masterInviteCode: masterCode,
-      requireAdminApproval: requireApproval
+      requireAdminApproval: requireApproval,
+      adminEmail,
+      adminPassword
     });
     setSaveSuccess(true);
     triggerCelebration();
@@ -68,6 +76,8 @@ export const AdminPanel = () => {
     }
   };
 
+  const pendingCount = couples.filter(c => c.status === 'pending').length;
+
   return (
     <div>
       {/* Header */}
@@ -77,33 +87,35 @@ export const AdminPanel = () => {
             <ShieldCheck size={14} />
             Área de Administração
           </span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-            Controle de Casais & Segurança
-          </span>
+          {pendingCount > 0 && (
+            <span className="badge badge-rose">
+              {pendingCount} casal(is) aguardando sua autorização!
+            </span>
+          )}
         </div>
         <h1 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-          Painel de Controle do Administrador
+          Painel de Controle de Usuários
         </h1>
         <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)' }}>
-          Gerencie o acesso à plataforma para que apenas casais convidados e liberados por você possam usar o sistema e o banco de dados.
+          Autorize e libere o acesso de novos casais ou bloqueie contas indesejadas para manter seu banco de dados e APIs 100% protegidos.
         </p>
       </div>
 
-      {/* Access Gate & Master Invite Code Configuration */}
+      {/* Access Gate & Config */}
       <div className="card" style={{ marginBottom: '1.75rem', borderLeft: '5px solid var(--color-gold)' }}>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Key size={18} color="var(--color-gold)" />
-          Porta de Entrada: Código de Convite da Família
+          Regras de Acesso & Código de Convite da Família
         </h3>
-        <p style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
-          Novos casais só conseguem criar conta se tiverem esse código. Você pode alterá-lo a qualquer momento.
+        <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
+          Novos casais só conseguem criar conta se digitarem esse código de convite. Você pode alterá-lo quando quiser.
         </p>
 
         <form onSubmit={handleSaveConfig} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', alignItems: 'flex-end' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
             <div>
-              <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
-                Código Mestre de Convite Atual
+              <label style={{ fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                Código Mestre de Convite
               </label>
               <input
                 type="text"
@@ -112,20 +124,64 @@ export const AdminPanel = () => {
                 onChange={e => setMasterCode(e.target.value.toUpperCase())}
                 style={{
                   width: '100%',
-                  padding: '0.75rem 1rem',
+                  padding: '0.65rem 0.85rem',
                   borderRadius: 'var(--border-radius-md)',
                   border: '1px solid var(--border-color)',
                   background: 'var(--bg-app)',
                   color: 'var(--color-text-main)',
                   fontWeight: 800,
-                  fontSize: '1.1rem',
+                  fontSize: '1rem',
                   letterSpacing: '0.08em',
                   textTransform: 'uppercase'
                 }}
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', paddingBottom: '0.5rem' }}>
+            <div>
+              <label style={{ fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                Email de Login do Admin
+              </label>
+              <input
+                type="text"
+                required
+                value={adminEmail}
+                onChange={e => setAdminEmail(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: 'var(--border-radius-md)',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-app)',
+                  color: 'var(--color-text-main)',
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
+
+            <div>
+              <label style={{ fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                Senha de Login do Admin
+              </label>
+              <input
+                type="text"
+                required
+                value={adminPassword}
+                onChange={e => setAdminPassword(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: 'var(--border-radius-md)',
+                  border: '1px solid var(--border-color)',
+                  background: 'var(--bg-app)',
+                  color: 'var(--color-text-main)',
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', paddingTop: '0.5rem', borderTop: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <input
                 type="checkbox"
                 id="requireApprovalCheckbox"
@@ -134,14 +190,14 @@ export const AdminPanel = () => {
                 style={{ width: '18px', height: '18px', accentColor: 'var(--color-gold)', cursor: 'pointer' }}
               />
               <label htmlFor="requireApprovalCheckbox" style={{ fontSize: '0.88rem', fontWeight: 600, cursor: 'pointer' }}>
-                Exigir aprovação manual para novos cadastros
+                Exigir aprovação manual para novos cadastros (Recomendado)
               </label>
             </div>
 
             <button
               type="submit"
               className="btn btn-gold"
-              style={{ alignSelf: 'flex-end', padding: '0.75rem 1.25rem' }}
+              style={{ padding: '0.65rem 1.25rem' }}
             >
               {saveSuccess ? (
                 <>
@@ -149,7 +205,7 @@ export const AdminPanel = () => {
                 </>
               ) : (
                 <>
-                  <Sparkles size={16} /> Salvar Regras de Acesso
+                  <Sparkles size={16} /> Salvar Configurações
                 </>
               )}
             </button>
@@ -165,7 +221,7 @@ export const AdminPanel = () => {
               Casais Cadastrados ({couples.length})
             </h3>
             <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-              Libere o acesso de novos casais ou bloqueie contas quando desejar.
+              Libere o acesso dos casais aprovados clicando em "Liberar Acesso".
             </p>
           </div>
 
@@ -188,7 +244,7 @@ export const AdminPanel = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
               <thead>
                 <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--color-text-muted)', fontSize: '0.78rem', textTransform: 'uppercase' }}>
-                  <th style={{ padding: '0.75rem' }}>Casal</th>
+                  <th style={{ padding: '0.75rem' }}>Casal & Email</th>
                   <th style={{ padding: '0.75rem' }}>Tipo</th>
                   <th style={{ padding: '0.75rem' }}>Data Cadastro</th>
                   <th style={{ padding: '0.75rem', textAlign: 'center' }}>Status de Acesso</th>
@@ -210,7 +266,11 @@ export const AdminPanel = () => {
                           <span style={{ color: 'var(--color-gold)' }}>&</span>
                           <span>{c.wife_emoji || '👩‍💼'} {c.wife_name}</span>
                         </div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.15rem' }}>
+                          <Mail size={12} />
+                          <span>{c.email || 'Sem email (PIN clássico)'}</span>
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
                           Níveis: {c.husband_level || 'Iniciante'} / {c.wife_level || 'Iniciante'}
                         </div>
                       </td>

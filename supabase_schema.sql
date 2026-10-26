@@ -6,19 +6,27 @@
 -- 1. TABELA DE CASAIS (UNIDADES FAMILIARES)
 CREATE TABLE IF NOT EXISTS public.couples (
   id TEXT PRIMARY KEY,
+  email TEXT UNIQUE,
+  password TEXT NOT NULL,
   husband_name TEXT NOT NULL,
   husband_emoji TEXT DEFAULT '👨‍💻',
   husband_level TEXT DEFAULT 'Iniciante',
   wife_name TEXT NOT NULL,
   wife_emoji TEXT DEFAULT '👩‍💼',
   wife_level TEXT DEFAULT 'Iniciante',
-  couple_pin TEXT NOT NULL, -- Senha de acesso do casal
+  couple_pin TEXT, -- Suporte retrocompatível
   is_admin BOOLEAN DEFAULT false,
   status TEXT DEFAULT 'approved', -- 'approved' | 'pending' | 'blocked'
   couple_goal JSONB DEFAULT '{"title": "Estudo em Casal: 7 Dias de Fé & Fluência", "targetDays": 7, "loveNote": "Juntos somos mais fortes e mais sábios na Palavra."}'::jsonb,
   created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()),
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now())
 );
+
+-- Garantir colunas se tabela já existia previamente
+ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS password TEXT;
+ALTER TABLE public.couples ADD COLUMN IF NOT EXISTS couple_pin TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS couples_email_idx ON public.couples(email);
 
 -- 2. TABELA DE PROGRESSÃO INDIVIDUAL DOS PERFIS
 CREATE TABLE IF NOT EXISTS public.profiles_progress (
@@ -43,13 +51,19 @@ CREATE TABLE IF NOT EXISTS public.system_config (
   id TEXT PRIMARY KEY DEFAULT 'main',
   master_invite_code TEXT DEFAULT 'GRACE2026', -- Código obrigatório para novos casais cadastrarem
   require_admin_approval BOOLEAN DEFAULT true, -- Se novos casais precisam de aprovação manual do admin
+  admin_email TEXT DEFAULT 'admin@gracefluency.com',
+  admin_password TEXT DEFAULT 'admin2026',
   gemini_api_key TEXT DEFAULT '',
   updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now())
 );
 
+-- Garantir colunas se já existia previamente
+ALTER TABLE public.system_config ADD COLUMN IF NOT EXISTS admin_email TEXT DEFAULT 'admin@gracefluency.com';
+ALTER TABLE public.system_config ADD COLUMN IF NOT EXISTS admin_password TEXT DEFAULT 'admin2026';
+
 -- Inserir configuração inicial se não existir
-INSERT INTO public.system_config (id, master_invite_code, require_admin_approval)
-VALUES ('main', 'GRACE2026', true)
+INSERT INTO public.system_config (id, master_invite_code, require_admin_approval, admin_email, admin_password)
+VALUES ('main', 'GRACE2026', true, 'admin@gracefluency.com', 'admin2026')
 ON CONFLICT (id) DO NOTHING;
 
 -- ==============================================================================
@@ -60,12 +74,14 @@ ALTER TABLE public.profiles_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.system_config ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de acesso aberto com a chave anon pública do cliente
+DROP POLICY IF EXISTS "Permitir leitura e escrita dos casais" ON public.couples;
 DROP POLICY IF EXISTS "Permitir leitura dos casais" ON public.couples;
-CREATE POLICY "Permitir leitura dos casais" ON public.couples FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir leitura e escrita dos casais" ON public.couples FOR ALL USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Permitir leitura e escrita do progresso" ON public.profiles_progress;
 DROP POLICY IF EXISTS "Permitir leitura do progresso" ON public.profiles_progress;
-CREATE POLICY "Permitir leitura do progresso" ON public.profiles_progress FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Permitir leitura e escrita do progresso" ON public.profiles_progress FOR ALL USING (true) WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Permitir leitura e escrita de configs" ON public.system_config;
 DROP POLICY IF EXISTS "Permitir leitura de configs" ON public.system_config;
-CREATE POLICY "Permitir leitura de configs" ON public.system_config FOR ALL USING (true) WITH CHECK (true);
-
+CREATE POLICY "Permitir leitura e escrita de configs" ON public.system_config FOR ALL USING (true) WITH CHECK (true);

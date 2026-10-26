@@ -4,6 +4,7 @@ import { INITIAL_FLASHCARDS } from '../data/initialFlashcardsData';
 // Local storage backup keys
 const LOCAL_COUPLE_KEY = 'grace_fluency_active_couple_v1';
 const LOCAL_CONFIG_KEY = 'grace_fluency_system_config_v1';
+const LOCAL_ADMIN_KEY = 'grace_fluency_admin_session_v1';
 
 // Starter flashcards with clean 0-progress state
 const getCleanStarterFlashcards = () => {
@@ -20,7 +21,7 @@ class DatabaseService {
     this.isOnline = isSupabaseConfigured();
   }
 
-  // 1. Obter configurações do sistema (Código Mestre de Convite)
+  // 1. Obter configurações do sistema (Código Mestre, Aprovação & Credenciais Admin)
   async getSystemConfig() {
     if (this.isOnline && supabase) {
       try {
@@ -46,16 +47,21 @@ class DatabaseService {
 
     return {
       master_invite_code: 'GRACE2026',
-      require_admin_approval: true
+      require_admin_approval: true,
+      admin_email: 'admin@gracefluency.com',
+      admin_password: 'admin2026'
     };
   }
 
   // 2. Atualizar Código Mestre de Convite e Regras (Admin Only)
-  async updateSystemConfig({ masterInviteCode, requireAdminApproval }) {
+  async updateSystemConfig(configUpdates) {
+    const current = await this.getSystemConfig();
     const newConfig = {
       id: 'main',
-      master_invite_code: masterInviteCode.trim().toUpperCase(),
-      require_admin_approval: Boolean(requireAdminApproval),
+      master_invite_code: (configUpdates.masterInviteCode ?? current.master_invite_code).trim().toUpperCase(),
+      require_admin_approval: Boolean(configUpdates.requireAdminApproval ?? current.require_admin_approval),
+      admin_email: (configUpdates.adminEmail ?? current.admin_email).trim().toLowerCase(),
+      admin_password: (configUpdates.adminPassword ?? current.admin_password).trim(),
       updated_at: new Date().toISOString()
     };
 
@@ -74,39 +80,72 @@ class DatabaseService {
     return newConfig;
   }
 
-  // 3. Cadastrar Novo Casal (Com validação de código de convite & progresso ZERADO)
+  // 3. Cadastrar Novo Casal com EMAIL e SENHA (com progresso 100% ZERADO)
   async registerCouple({
+    email,
+    password,
     husbandName,
     husbandEmoji = '👨‍💻',
     husbandLevel = 'Iniciante',
     wifeName,
     wifeEmoji = '👩‍💼',
     wifeLevel = 'Iniciante',
-    couplePin,
     inviteCode = ''
   }) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      return { success: false, message: 'Informe o email e uma senha de acesso.' };
+    }
+
     const config = await this.getSystemConfig();
 
     // Verificar se já existe algum casal no banco para definir se é o primeiro (Admin Master)
     let isFirstCouple = false;
+    let emailAlreadyExists = false;
+
     if (this.isOnline && supabase) {
       try {
+        // Verificar se email já existe
+        const { data: existingUser } = await supabase
+          .from('couples')
+          .select('id')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+        if (existingUser) {
+          emailAlreadyExists = true;
+        }
+
+        // Verificar contagem geral
         const { count, error } = await supabase
           .from('couples')
           .select('id', { count: 'exact', head: true });
-        if (!error && count === 0) {
+
+        if (!error && (count === 0 || count === null)) {
           isFirstCouple = true;
         }
       } catch (e) {
-        isFirstCouple = true;
+        console.warn('Erro ao checar Supabase na criação:', e);
       }
     } else {
-      // Offline fallback: primeiro cadastro vira admin
+      // Verificação Local
       const localCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
       if (localCouples.length === 0) isFirstCouple = true;
+      if (localCouples.some(c => c.email === cleanEmail)) {
+        emailAlreadyExists = true;
+      }
     }
 
-    // Se NÃO for o primeiro casal, validar código de convite obrigatório
+    if (emailAlreadyExists) {
+      return {
+        success: false,
+        message: 'Este email já está cadastrado. Alterne para a aba "Já Temos Conta" para entrar.'
+      };
+    }
+
+    // Se NÃO for o primeiro casal, validar código de convite
     if (!isFirstCouple) {
       const expectedCode = (config.master_invite_code || 'GRACE2026').trim().toUpperCase();
       const providedCode = (inviteCode || '').trim().toUpperCase();
@@ -114,7 +153,7 @@ class DatabaseService {
       if (providedCode !== expectedCode) {
         return {
           success: false,
-          message: 'Código de Convite inválido! Solicite o código de acesso exclusivo ao administrador da plataforma.'
+          message: 'Código de Convite inválido! Solicite o código de acesso ao administrador.'
         };
       }
     }
@@ -127,13 +166,15 @@ class DatabaseService {
 
     const coupleRecord = {
       id: coupleId,
+      email: cleanEmail,
+      password: cleanPassword,
+      couple_pin: cleanPassword, // compatibilidade
       husband_name: husbandName.trim(),
       husband_emoji: husbandEmoji.trim() || '👨‍💻',
       husband_level: husbandLevel,
       wife_name: wifeName.trim(),
       wife_emoji: wifeEmoji.trim() || '👩‍💼',
       wife_level: wifeLevel,
-      couple_pin: couplePin.trim(),
       is_admin: isAdmin,
       status: initialStatus,
       couple_goal: {
@@ -202,7 +243,16 @@ class DatabaseService {
       }
     };
 
-    localStorage.setItem(LOCAL_COUPLE_KEY, JSON.stringify(fullSession));
+    // Armazenar na lista de casais locais também
+    try {
+      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
+      allCouples.push(coupleRecord);
+      localStorage.setItem('grace_fluency_all_couples', JSON.stringify(allCouples));
+    } catch (e) {}
+
+    if (initialStatus === 'approved') {
+      localStorage.setItem(LOCAL_COUPLE_KEY, JSON.stringify(fullSession));
+    }
 
     return {
       success: true,
@@ -210,15 +260,19 @@ class DatabaseService {
       status: initialStatus,
       isAdmin,
       message: initialStatus === 'pending'
-        ? 'Cadastro realizado! Seu acesso foi enviado para aprovação do administrador.'
+        ? 'Cadastro realizado com sucesso! Sua conta está aguardando liberação do administrador para proteger o banco de dados.'
         : 'Cadastro realizado com sucesso! Bem-vindos à plataforma!'
     };
   }
 
-  // 4. Login do Casal por PIN ou Nome
-  async loginCouple(enteredPin) {
-    const cleanPin = (enteredPin || '').trim();
-    if (!cleanPin) return { success: false, message: 'Digite a senha do casal.' };
+  // 4. Login do Casal por EMAIL e SENHA
+  async loginCouple(email, password) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      return { success: false, message: 'Digite o email e a senha do casal.' };
+    }
 
     // Tentar Supabase primeiro
     if (this.isOnline && supabase) {
@@ -226,19 +280,23 @@ class DatabaseService {
         const { data: couple, error } = await supabase
           .from('couples')
           .select('*')
-          .eq('couple_pin', cleanPin)
-          .single();
+          .eq('email', cleanEmail)
+          .maybeSingle();
 
         if (!error && couple) {
+          if (couple.password !== cleanPassword && couple.couple_pin !== cleanPassword) {
+            return { success: false, message: 'Senha incorreta. Verifique e tente novamente.' };
+          }
+
           // Verificar status de aprovação
           if (couple.status === 'blocked') {
-            return { success: false, message: 'Esta conta foi desativada pelo administrador.' };
+            return { success: false, message: 'Esta conta foi bloqueada pelo administrador.' };
           }
           if (couple.status === 'pending' && !couple.is_admin) {
             return { 
               success: false, 
               isPending: true,
-              message: 'Seu acesso ainda está aguardando liberação do administrador.' 
+              message: 'Sua conta ainda está aguardando liberação do administrador. Solicite o acesso a ele!' 
             };
           }
 
@@ -273,22 +331,74 @@ class DatabaseService {
 
     // Fallback local se estiver offline
     try {
-      const saved = localStorage.getItem(LOCAL_COUPLE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.couple?.couple_pin === cleanPin) {
-          if (parsed.couple?.status === 'blocked') {
-            return { success: false, message: 'Esta conta foi desativada.' };
-          }
-          return { success: true, data: parsed };
+      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
+      const couple = allCouples.find(c => c.email === cleanEmail);
+      if (couple) {
+        if (couple.password !== cleanPassword && couple.couple_pin !== cleanPassword) {
+          return { success: false, message: 'Senha incorreta.' };
         }
+        if (couple.status === 'blocked') {
+          return { success: false, message: 'Esta conta foi desativada.' };
+        }
+        if (couple.status === 'pending' && !couple.is_admin) {
+          return { success: false, isPending: true, message: 'Aguardando liberação do administrador.' };
+        }
+
+        const savedSession = localStorage.getItem(LOCAL_COUPLE_KEY);
+        const parsed = savedSession ? JSON.parse(savedSession) : null;
+        const session = {
+          couple,
+          profiles: parsed?.profiles || {
+            husband: { streak: 0, points: 0, completed_devotionals: [], memorized_verses: [], flashcards: getCleanStarterFlashcards() },
+            wife: { streak: 0, points: 0, completed_devotionals: [], memorized_verses: [], flashcards: getCleanStarterFlashcards() }
+          }
+        };
+
+        localStorage.setItem(LOCAL_COUPLE_KEY, JSON.stringify(session));
+        return { success: true, data: session };
       }
     } catch (e) {}
 
-    return { success: false, message: 'Senha do casal não encontrada. Verifique ou crie uma conta.' };
+    return { success: false, message: 'Email não encontrado. Verifique os dados ou crie uma nova conta.' };
   }
 
-  // 5. Salvar Progresso de um Perfil (Sincronizado)
+  // 5. Login Dedicado do Administrador
+  async loginAdmin(emailOrUser, password) {
+    const cleanUser = (emailOrUser || '').trim().toLowerCase();
+    const cleanPass = (password || '').trim();
+
+    const config = await this.getSystemConfig();
+
+    const expectedAdminEmail = (config.admin_email || 'admin@gracefluency.com').toLowerCase();
+    const expectedAdminPass = (config.admin_password || 'admin2026');
+
+    // Verificar se confere com credencial mestre do admin
+    if ((cleanUser === expectedAdminEmail || cleanUser === 'admin') && cleanPass === expectedAdminPass) {
+      const adminSession = {
+        isAdmin: true,
+        email: expectedAdminEmail,
+        isMasterAdmin: true
+      };
+      localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify(adminSession));
+      return { success: true, adminSession };
+    }
+
+    // Verificar se é uma conta de casal com is_admin = true
+    const coupleLogin = await this.loginCouple(cleanUser, cleanPass);
+    if (coupleLogin.success && coupleLogin.data?.couple?.is_admin) {
+      const adminSession = {
+        isAdmin: true,
+        email: cleanUser,
+        coupleData: coupleLogin.data
+      };
+      localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify(adminSession));
+      return { success: true, adminSession };
+    }
+
+    return { success: false, message: 'Credenciais de administrador inválidas.' };
+  }
+
+  // 6. Salvar Progresso de um Perfil (Sincronizado diretamente no Supabase)
   async saveProfileProgress(coupleId, role, profileData) {
     const progressId = `${coupleId}_${role}`;
     const payload = {
@@ -319,7 +429,7 @@ class DatabaseService {
     }
   }
 
-  // 6. Salvar Metas / Recadinho do Casal / Nomes
+  // 7. Salvar Dados do Casal (Metas, Recadinho, Nomes)
   async saveCoupleData(coupleId, coupleUpdates) {
     if (this.isOnline && supabase) {
       try {
@@ -336,7 +446,7 @@ class DatabaseService {
     }
   }
 
-  // 7. Listar todos os casais cadastrados (Painel Admin)
+  // 8. Listar todos os casais cadastrados (Painel Admin)
   async getAllCouples() {
     if (this.isOnline && supabase) {
       try {
@@ -355,6 +465,9 @@ class DatabaseService {
 
     // Fallback local
     try {
+      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
+      if (allCouples.length > 0) return allCouples;
+
       const active = localStorage.getItem(LOCAL_COUPLE_KEY);
       if (active) {
         const parsed = JSON.parse(active);
@@ -365,7 +478,7 @@ class DatabaseService {
     return [];
   }
 
-  // 8. Aprovar ou Bloquear um Casal (Admin)
+  // 9. Aprovar ou Bloquear um Casal (Admin)
   async updateCoupleStatus(coupleId, newStatus) {
     if (this.isOnline && supabase) {
       try {
@@ -376,14 +489,21 @@ class DatabaseService {
 
         if (!error) return { success: true };
       } catch (e) {
-        console.error('Erro ao atualizar status do casal:', e);
+        console.error('Erro ao atualizar status do casal no Supabase:', e);
       }
     }
+
+    // Atualizar no local storage também
+    try {
+      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
+      const updated = allCouples.map(c => c.id === coupleId ? { ...c, status: newStatus } : c);
+      localStorage.setItem('grace_fluency_all_couples', JSON.stringify(updated));
+    } catch (e) {}
 
     return { success: true };
   }
 
-  // Obter sessão salva no navegador
+  // Obter sessões salvas no navegador
   getLocalSession() {
     try {
       const saved = localStorage.getItem(LOCAL_COUPLE_KEY);
@@ -392,8 +512,21 @@ class DatabaseService {
     return null;
   }
 
+  getAdminSession() {
+    try {
+      const saved = localStorage.getItem(LOCAL_ADMIN_KEY);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return null;
+  }
+
+  clearAdminSession() {
+    localStorage.removeItem(LOCAL_ADMIN_KEY);
+  }
+
   clearLocalSession() {
     localStorage.removeItem(LOCAL_COUPLE_KEY);
+    localStorage.removeItem(LOCAL_ADMIN_KEY);
   }
 }
 
