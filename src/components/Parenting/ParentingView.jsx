@@ -11,9 +11,10 @@ import {
   ArrowRight,
   BookOpen,
   Heart,
-  Shield
+  Shield,
+  Filter
 } from 'lucide-react';
-import { PARENTING_CHAPTERS } from '../../data/parentingData';
+import { PARENTING_TOPICS, PARENTING_CATEGORIES } from '../../data/parentingData';
 import { InteractiveVerse } from '../Devotionals/InteractiveVerse';
 import { WordDetailModal } from '../Devotionals/WordDetailModal';
 import { DevotionalQuiz } from '../Devotionals/DevotionalQuiz';
@@ -22,16 +23,34 @@ import { useUser } from '../../context/UserContext';
 
 export const ParentingView = () => {
   const { currentProfileData, completeDevotional, currentProfileName, spouseProfileName } = useUser();
-  const [selectedChapterId, setSelectedChapterId] = useState(PARENTING_CHAPTERS[0]?.id || 'ezzo-cap-1');
+  const [selectedTopicId, setSelectedTopicId] = useState(PARENTING_TOPICS[0]?.id || 'topic-rebellion');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedWord, setSelectedWord] = useState(null);
   const [isReadingEn, setIsReadingEn] = useState(false);
   const [isReadingPt, setIsReadingPt] = useState(false);
   const [isReadingPrayer, setIsReadingPrayer] = useState(false);
   const [showPtText, setShowPtText] = useState(true);
 
-  const activeChapter = PARENTING_CHAPTERS.find(c => c.id === selectedChapterId) || PARENTING_CHAPTERS[0];
+  // Filter topics by category
+  const filteredTopics = selectedCategory === 'all'
+    ? PARENTING_TOPICS
+    : PARENTING_TOPICS.filter(t => t.category === selectedCategory);
+
+  const activeTopic = PARENTING_TOPICS.find(t => t.id === selectedTopicId) || filteredTopics[0] || PARENTING_TOPICS[0];
   const completedList = currentProfileData?.completed_devotionals || currentProfileData?.completedDevotionals || [];
-  const isCompleted = completedList.includes(activeChapter.id);
+  const isCompleted = completedList.includes(activeTopic.id);
+
+  const handleSelectCategory = (catId) => {
+    setSelectedCategory(catId);
+    const inCat = catId === 'all' ? PARENTING_TOPICS : PARENTING_TOPICS.filter(t => t.category === catId);
+    if (inCat.length > 0 && !inCat.some(t => t.id === selectedTopicId)) {
+      setSelectedTopicId(inCat[0].id);
+      speechService.stop();
+      setIsReadingEn(false);
+      setIsReadingPt(false);
+      setIsReadingPrayer(false);
+    }
+  };
 
   const handleReadEn = () => {
     if (isReadingEn) {
@@ -43,7 +62,7 @@ export const ParentingView = () => {
     setIsReadingPt(false);
     setIsReadingPrayer(false);
     setIsReadingEn(true);
-    speechService.speak(activeChapter.devotionalEn, {
+    speechService.speak(activeTopic.devotionalEn, {
       lang: 'en-US',
       rate: 0.85,
       onEnd: () => setIsReadingEn(false),
@@ -61,7 +80,7 @@ export const ParentingView = () => {
     setIsReadingEn(false);
     setIsReadingPrayer(false);
     setIsReadingPt(true);
-    speechService.speak(activeChapter.devotionalPt, {
+    speechService.speak(activeTopic.devotionalPt, {
       lang: 'pt-BR',
       rate: 0.95,
       onEnd: () => setIsReadingPt(false),
@@ -79,7 +98,7 @@ export const ParentingView = () => {
     setIsReadingEn(false);
     setIsReadingPt(false);
     setIsReadingPrayer(true);
-    speechService.speak(activeChapter.parentPrayerEn, {
+    speechService.speak(activeTopic.parentPrayerEn, {
       lang: 'en-US',
       rate: 0.85,
       onEnd: () => setIsReadingPrayer(false),
@@ -88,31 +107,73 @@ export const ParentingView = () => {
   };
 
   const handleComplete = () => {
-    completeDevotional(activeChapter.id, `Capítulo ${activeChapter.chapter}: ${activeChapter.bookChapterTitle}`);
+    completeDevotional(activeTopic.id, `${activeTopic.weekLabel}: ${activeTopic.topicTitle}`);
   };
 
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: '1.75rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
           <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
             <Users size={13} />
-            Educação de Filhos à Maneira de Deus
+            Educação de Filhos • Princípios Bíblicos e Práticos
           </span>
           <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-            Gary & Anne Marie Ezzo
+            Estudos Semanais para Casais • Inglês & Fé
           </span>
         </div>
-        <h1 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-          Formação de Filhos & Família
+        <h1 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.35rem', wordBreak: 'break-word' }}>
+          Formação de Filhos & Desafios Familiares
         </h1>
-        <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)', maxWidth: '780px' }}>
-          Módulos especiais em inglês para casais aplicarem os princípios dos Capítulos 1 a 6 de Gary e Anne Marie Ezzo: o coração da criança, sofa time, 5 linguagens do amor, o mandato do pai, a consciência moral e liderança por influência.
+        <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)', maxWidth: '820px' }}>
+          Tópicos semanais em inglês e português para casais vencerem desafios reais da criação com sabedoria bíblica: rebeldia e desobediência, birras e domínio próprio, o coração da criança, tempo de sofá, bênção paterna, conflitos entre irmãos e moderação com telas.
         </p>
       </div>
 
-      {/* Chapters Carousel / Selector */}
+      {/* Category Filter Chips */}
+      <div style={{
+        display: 'flex',
+        gap: '0.45rem',
+        overflowX: 'auto',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: '0.65rem',
+        marginBottom: '1rem',
+        scrollbarWidth: 'none'
+      }}>
+        {PARENTING_CATEGORIES.map((cat) => {
+          const isActive = selectedCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => handleSelectCategory(cat.id)}
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                padding: '0.42rem 0.85rem',
+                borderRadius: 'var(--border-radius-full)',
+                border: isActive ? '1px solid var(--color-gold)' : '1px solid var(--border-color)',
+                background: isActive ? 'var(--color-gold)' : 'var(--bg-surface)',
+                color: isActive ? '#ffffff' : 'var(--color-text-main)',
+                fontWeight: isActive ? 700 : 500,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>{cat.icon}</span>
+              <span>{cat.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Topics Carousel / Selector */}
       <div style={{
         display: 'flex',
         gap: '0.65rem',
@@ -125,15 +186,15 @@ export const ParentingView = () => {
         marginBottom: '1.5rem',
         scrollbarWidth: 'thin'
       }}>
-        {PARENTING_CHAPTERS.map((item) => {
-          const isCurrent = item.id === activeChapter.id;
+        {filteredTopics.map((item) => {
+          const isCurrent = item.id === activeTopic.id;
           const isDone = completedList.includes(item.id);
 
           return (
             <button
               key={item.id}
               onClick={() => {
-                setSelectedChapterId(item.id);
+                setSelectedTopicId(item.id);
                 speechService.stop();
                 setIsReadingEn(false);
                 setIsReadingPt(false);
@@ -153,7 +214,7 @@ export const ParentingView = () => {
                   ? 'var(--bg-surface)' 
                   : 'var(--bg-card)',
                 boxShadow: isCurrent ? 'var(--shadow-md)' : 'none',
-                minWidth: '190px',
+                minWidth: '210px',
                 textAlign: 'left',
                 position: 'relative',
                 transition: 'all 0.2s'
@@ -166,17 +227,17 @@ export const ParentingView = () => {
                   textTransform: 'uppercase',
                   color: isCurrent ? 'var(--color-gold)' : 'var(--color-text-muted)' 
                 }}>
-                  Capítulo {item.chapter}
+                  {item.icon} {item.weekLabel} • TÓPICO {item.topicNumber}
                 </span>
                 {isDone && (
                   <CheckCircle size={14} color="var(--color-emerald)" />
                 )}
               </div>
               <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-text-main)', marginBottom: '0.2rem' }}>
-                {item.bookChapterTitle}
+                {item.topicTitle}
               </div>
-              <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' }}>
-                {item.theme}
+              <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '190px' }}>
+                {item.topicTitleEn}
               </div>
             </button>
           );
@@ -184,20 +245,22 @@ export const ParentingView = () => {
       </div>
 
       {/* Main Title Banner */}
-      <div className="card" style={{ marginBottom: '1.5rem', borderLeft: '5px solid var(--color-gold)' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', borderLeft: '5px solid var(--color-gold)', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-              <span className="badge badge-gold">{activeChapter.theme}</span>
-              <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
-                {activeChapter.bookChapterTitle}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
+              <span className="badge badge-gold">
+                {activeTopic.icon} {activeTopic.weekLabel} • {activeTopic.categoryLabel}
+              </span>
+              <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', fontWeight: 600 }}>
+                {activeTopic.topicTitle}
               </span>
             </div>
-            <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '0.25rem' }}>
-              {activeChapter.title}
+            <h2 style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '0.25rem', wordBreak: 'break-word' }}>
+              {activeTopic.title}
             </h2>
-            <div style={{ fontSize: '1.02rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-              {activeChapter.titlePt}
+            <div style={{ fontSize: '1.02rem', color: 'var(--color-text-muted)', fontStyle: 'italic', wordBreak: 'break-word' }}>
+              {activeTopic.titlePt}
             </div>
           </div>
 
@@ -222,24 +285,24 @@ export const ParentingView = () => {
       {/* Scripture Section with Audio & Interactive Highlights */}
       <div style={{ marginBottom: '1.5rem' }}>
         <InteractiveVerse 
-          verseRef={activeChapter.verseRef}
-          verseEn={activeChapter.verseEn}
-          versePt={activeChapter.versePt}
-          keywords={activeChapter.keywords}
-          audioSnippet={activeChapter.audioSnippet}
+          verseRef={activeTopic.verseRef}
+          verseEn={activeTopic.verseEn}
+          versePt={activeTopic.versePt}
+          keywords={activeTopic.keywords}
+          audioSnippet={activeTopic.audioSnippet}
           onSelectWord={(wordData) => setSelectedWord(wordData)}
         />
       </div>
 
       {/* Core Keywords Highlight Grid */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
-        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', width: '100%', boxSizing: 'border-box' }}>
+        <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
           <Sparkles size={17} color="var(--color-gold)" />
-          Vocabulário Essencial do Capítulo (Toque para ouvir a pronúncia)
+          Vocabulário Essencial do Tópico (Toque para ouvir a pronúncia e salvar)
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '0.75rem' }}>
-          {activeChapter.keywords.map((kw, idx) => (
+          {activeTopic.keywords.map((kw, idx) => (
             <div 
               key={idx}
               onClick={() => setSelectedWord(kw)}
@@ -286,14 +349,14 @@ export const ParentingView = () => {
       </div>
 
       {/* Devotional Reflection for Parents */}
-      <div className="card" style={{ marginBottom: '1.5rem' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
             <BookOpen size={18} color="var(--color-gold)" />
-            Reflexão para o Casal: Educando à Maneira de Deus
+            Reflexão Prática para o Casal: {activeTopic.topicTitle}
           </h3>
 
-          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <button
               onClick={handleReadEn}
               className={`btn ${isReadingEn ? 'btn-gold' : 'btn-outline'}`}
@@ -331,7 +394,7 @@ export const ParentingView = () => {
           color: 'var(--color-text-main)',
           marginBottom: showPtText ? '1rem' : '0'
         }}>
-          {activeChapter.devotionalEn}
+          {activeTopic.devotionalEn}
         </div>
 
         {/* Portuguese Translation */}
@@ -346,22 +409,22 @@ export const ParentingView = () => {
             color: 'var(--color-text-muted)'
           }}>
             <div style={{ fontWeight: 700, fontSize: '0.78rem', textTransform: 'uppercase', color: 'var(--color-gold)', marginBottom: '0.35rem' }}>
-              Tradução e Aplicação para o Casal:
+              Tradução e Aplicação Prática para os Pais:
             </div>
-            {activeChapter.devotionalPt}
+            {activeTopic.devotionalPt}
           </div>
         )}
       </div>
 
       {/* Grammar & Communication Gem */}
-      {activeChapter.grammarGem && (
-        <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)', border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+      {activeTopic.grammarGem && (
+        <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)', border: '1px solid rgba(245, 158, 11, 0.25)', width: '100%', boxSizing: 'border-box' }}>
           <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--color-gold)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Lightbulb size={18} />
-            {activeChapter.grammarGem.title}
+            {activeTopic.grammarGem.title}
           </h3>
           <p style={{ fontSize: '0.9rem', color: 'var(--color-text-main)', marginBottom: '0.75rem', lineHeight: 1.55 }}>
-            {activeChapter.grammarGem.explanation}
+            {activeTopic.grammarGem.explanation}
           </p>
           <div style={{
             background: 'var(--bg-surface)',
@@ -373,17 +436,17 @@ export const ParentingView = () => {
             color: 'var(--color-primary)',
             whiteSpace: 'pre-wrap'
           }}>
-            {activeChapter.grammarGem.example}
+            {activeTopic.grammarGem.example}
           </div>
         </div>
       )}
 
       {/* Parents' Prayer for Children */}
-      <div className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid var(--color-emerald)' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', borderLeft: '4px solid var(--color-emerald)', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <h3 style={{ fontSize: '1.15rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <Heart size={17} color="var(--color-rose)" />
-            Oração dos Pais a Dois pelos Filhos (Adam & Marcela)
+            Oração a Dois pelos Filhos (Adam & Marcela)
           </h3>
           <button
             onClick={handleReadPrayer}
@@ -396,18 +459,18 @@ export const ParentingView = () => {
         </div>
 
         <div style={{ background: 'var(--bg-app)', padding: '1rem', borderRadius: 'var(--border-radius-md)', marginBottom: '0.75rem', fontStyle: 'italic', fontSize: '0.95rem', lineHeight: 1.6, color: 'var(--color-text-main)' }}>
-          "{activeChapter.parentPrayerEn}"
+          "{activeTopic.parentPrayerEn}"
         </div>
         <div style={{ fontSize: '0.88rem', color: 'var(--color-text-muted)', lineHeight: 1.55 }}>
-          <strong>Em Português:</strong> "{activeChapter.parentPrayerPt}"
+          <strong>Em Português:</strong> "{activeTopic.parentPrayerPt}"
         </div>
       </div>
 
-      {/* Chapter Quiz */}
+      {/* Topic Quiz */}
       <div style={{ marginBottom: '2rem' }}>
         <DevotionalQuiz 
-          quizList={activeChapter.quiz} 
-          devotionalId={activeChapter.id} 
+          quizList={activeTopic.quiz} 
+          devotionalId={activeTopic.id} 
         />
       </div>
 
