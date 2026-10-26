@@ -255,7 +255,7 @@ html.dark .nav-tab-btn.active {
     display: none !important;
   }
 
-  /* Show mobile native-feeling bottom nav bar */
+  /* Show mobile native-feeling bottom nav bar with horizontal touch scroll */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
@@ -268,8 +268,15 @@ html.dark .nav-tab-btn.active {
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
     z-index: 999;
     align-items: center;
-    justify-content: space-around;
+    justify-content: flex-start;
+    overflow-x: auto;
     padding: 0 0.5rem;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-bottom-nav::-webkit-scrollbar {
+    display: none;
   }
 
   .mobile-nav-item {
@@ -278,17 +285,19 @@ html.dark .nav-tab-btn.active {
     align-items: center;
     justify-content: center;
     gap: 3px;
-    flex: 1;
+    min-width: 68px;
+    flex-shrink: 0;
     height: 100%;
     color: var(--color-text-muted);
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     font-weight: 600;
     text-decoration: none;
     transition: color 0.15s ease;
     border: none;
     background: transparent;
     cursor: pointer;
-    padding: 4px 0;
+    padding: 4px 6px;
+    white-space: nowrap;
   }
 
   .mobile-nav-item.active {

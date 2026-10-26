@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { UserProvider, useUser } from './context/UserContext';
 import { Navbar } from './components/Navbar/Navbar';
 import { AuthScreen } from './components/Auth/AuthScreen';
+import { BibleView } from './components/Bible/BibleView';
 import { DevotionalsView } from './components/Devotionals/DevotionalsView';
+import { ParentingView } from './components/Parenting/ParentingView';
 import { FlashcardsView } from './components/Flashcards/FlashcardsView';
 import { ProgressView } from './components/Progress/ProgressView';
 import { WorshipView } from './components/Worship/WorshipView';
@@ -26,7 +28,7 @@ const checkIsAdminPath = () => {
 };
 
 const MainApp = () => {
-  const [activeTab, setActiveTab] = useState('devotionals');
+  const [activeTab, setActiveTab] = useState('bible');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAdminPath, setIsAdminPath] = useState(checkIsAdminPath);
 
@@ -170,11 +172,13 @@ const MainApp = () => {
 
       {/* Main Dynamic View Content */}
       <main className="main-content">
+        {activeTab === 'bible' && <BibleView />}
         {activeTab === 'devotionals' && <DevotionalsView />}
+        {activeTab === 'parenting' && <ParentingView />}
         {activeTab === 'flashcards' && <FlashcardsView />}
-        {activeTab === 'progress' && <ProgressView />}
-        {activeTab === 'worship' && <WorshipView />}
         {activeTab === 'ai-tutor' && <AITutorView onOpenSettings={() => setIsSettingsOpen(true)} />}
+        {activeTab === 'worship' && <WorshipView />}
+        {activeTab === 'progress' && <ProgressView />}
         {activeTab === 'couple-hub' && <CoupleDashboard />}
       </main>
 

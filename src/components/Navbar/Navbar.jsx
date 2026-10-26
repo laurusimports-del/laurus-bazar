@@ -13,7 +13,8 @@ import {
   BarChart3,
   LogOut,
   Repeat,
-  ShieldCheck
+  ShieldCheck,
+  Users
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
@@ -44,12 +45,14 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
   };
 
   const navItems = [
-    { id: 'devotionals', label: 'Devocionais', icon: <BookOpen size={17} /> },
+    { id: 'bible', label: 'Bíblia', icon: <BookOpen size={17} /> },
+    { id: 'devotionals', label: 'Devocionais', icon: <Heart size={17} /> },
+    { id: 'parenting', label: 'Educação de Filhos', icon: <Users size={17} /> },
     { id: 'flashcards', label: 'Memorização', icon: <Layers size={17} /> },
-    { id: 'progress', label: 'Progresso', icon: <BarChart3 size={17} /> },
-    { id: 'worship', label: 'Louvores', icon: <Music size={17} /> },
     { id: 'ai-tutor', label: 'Tutor IA', icon: <Bot size={17} /> },
-    { id: 'couple-hub', label: 'Hub Casal', icon: <Heart size={17} /> }
+    { id: 'worship', label: 'Louvores', icon: <Music size={17} /> },
+    { id: 'progress', label: 'Progresso', icon: <BarChart3 size={17} /> },
+    { id: 'couple-hub', label: 'Hub Casal', icon: <Sparkles size={17} /> }
   ];
 
   return (
