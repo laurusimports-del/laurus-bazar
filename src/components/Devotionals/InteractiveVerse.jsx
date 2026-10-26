@@ -175,7 +175,7 @@ export const InteractiveVerse = ({
         <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-primary)', marginBottom: '0.35rem' }}>
           Holy Scripture (English NIV) — Toque nas palavras em destaque para estudar:
         </div>
-        <p style={{
+        <p className="interactive-verse-text" style={{
           fontFamily: 'var(--font-heading)',
           fontSize: '1.25rem',
           lineHeight: '1.75',

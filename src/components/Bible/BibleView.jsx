@@ -118,15 +118,15 @@ export const BibleView = () => {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Pesquisar versículos ou palavras em inglês ou português (ex: peace, love, coração, esperança, grace, shepherd)..."
+          placeholder="Pesquisar na Bíblia (ex: peace, love, coração, fé, grace)..."
           style={{
             width: '100%',
-            padding: '0.95rem 2.8rem 0.95rem 2.75rem',
+            padding: '0.85rem 2.5rem 0.85rem 2.6rem',
             borderRadius: 'var(--border-radius-lg)',
             border: '2px solid var(--border-color)',
             background: 'var(--bg-surface)',
             color: 'var(--color-text-main)',
-            fontSize: '0.95rem',
+            fontSize: '16px',
             boxShadow: 'var(--shadow-sm)',
             transition: 'border-color 0.2s ease'
           }}

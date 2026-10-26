@@ -135,7 +135,7 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
               title={`Trocar para perfil de ${spouseProfileName}`}
             >
               <span style={{ fontSize: '1.15rem' }}>{currentProfileEmoji}</span>
-              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-main)', maxWidth: '75px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {currentProfileName}
               </span>
               <Repeat size={12} color="var(--color-gold)" />

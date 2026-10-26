@@ -139,7 +139,7 @@ export const AITutorView = ({ onOpenSettings }) => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 160px)', minHeight: '550px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 200px)', minHeight: '420px' }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
@@ -318,7 +318,7 @@ export const AITutorView = ({ onOpenSettings }) => {
             border: '1px solid var(--border-color)',
             background: 'var(--bg-surface)',
             color: 'var(--color-text-main)',
-            fontSize: '0.94rem',
+            fontSize: '16px',
             outline: 'none',
             boxShadow: 'var(--shadow-sm)'
           }}

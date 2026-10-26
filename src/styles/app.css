@@ -4,6 +4,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .main-content {
@@ -237,8 +238,27 @@ html.dark .nav-tab-btn.active {
 }
 
 /* =========================================================================
-   Mobile-First Responsive Rules (Mobile Bottom Navigation & Touch UX)
+/* =========================================================================
+   iPhone & Mobile-First Native Ergonomics (iOS Safari, Dynamic Island, Home Bar)
    ========================================================================= */
+
+/* Global touch feel on iOS */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button, a, input, select, textarea, .card, .nav-tab-btn, .mobile-nav-item {
+  touch-action: manipulation;
+}
+
+/* Horizontal scroll containers smooth momentum swipe on iPhone */
+[style*="overflowX: auto"],
+[style*="overflow-x: auto"],
+.desktop-nav-tabs,
+.mobile-bottom-nav {
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
 
 /* Mobile Bottom Navigation Bar (Hidden on desktop) */
 .mobile-bottom-nav {
@@ -250,27 +270,56 @@ html.dark .nav-tab-btn.active {
 }
 
 @media (max-width: 768px) {
-  /* Hide desktop horizontal tabs on mobile */
+  /* Prevent iOS Safari 16px auto-zoom bug when focusing inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Hide desktop horizontal tabs on phone screens */
   .desktop-nav-tabs {
     display: none !important;
   }
 
-  /* Show mobile native-feeling bottom nav bar with horizontal touch scroll */
+  /* Top sticky header safe area for iPhone Notch / Dynamic Island */
+  header {
+    padding-top: max(0.55rem, env(safe-area-inset-top, 0px)) !important;
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px)) !important;
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  /* Main content padding accounting for iPhone Home Indicator bar */
+  .main-content {
+    padding-top: 0.85rem;
+    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+    padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+  }
+
+  /* Native Mobile Bottom Navigation Bar for iPhone */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 68px;
+    height: calc(62px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     background: var(--bg-surface);
     border-top: 1px solid var(--border-color);
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.09);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 999;
     align-items: center;
     justify-content: flex-start;
     overflow-x: auto;
-    padding: 0 0.5rem;
+    padding-left: max(0.35rem, env(safe-area-inset-left, 0px));
+    padding-right: max(0.35rem, env(safe-area-inset-right, 0px));
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
@@ -284,20 +333,24 @@ html.dark .nav-tab-btn.active {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    min-width: 68px;
+    gap: 2px;
+    min-width: 64px;
     flex-shrink: 0;
     height: 100%;
     color: var(--color-text-muted);
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 600;
     text-decoration: none;
-    transition: color 0.15s ease;
+    transition: color 0.15s ease, transform 0.15s ease;
     border: none;
     background: transparent;
     cursor: pointer;
-    padding: 4px 6px;
+    padding: 3px 4px;
     white-space: nowrap;
+  }
+
+  .mobile-nav-item:active {
+    transform: scale(0.94);
   }
 
   .mobile-nav-item.active {
@@ -307,46 +360,51 @@ html.dark .nav-tab-btn.active {
 
   .mobile-nav-item.active svg {
     color: var(--color-gold);
-    transform: scale(1.15);
-    transition: transform 0.2s ease;
+    transform: scale(1.12);
   }
 
-  /* Add padding bottom to main content so bottom bar doesn't overlap content */
-  .main-content {
-    padding-top: 1rem;
-    padding-bottom: 88px;
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
+  /* Modals as native iOS bottom sheets */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    overscroll-behavior-y: none;
   }
 
-  /* Touch buttons optimization */
+  .modal-content {
+    max-height: calc(88dvh - env(safe-area-inset-top, 0px));
+    border-radius: 24px 24px 0 0;
+    padding: 1.5rem 1.15rem calc(2rem + env(safe-area-inset-bottom, 0px));
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Optimized typography for iPhone screens (iPhone SE through 16 Pro Max) */
+  h1 {
+    font-size: 1.5rem !important;
+    line-height: 1.25 !important;
+  }
+
+  h2 {
+    font-size: 1.25rem !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Interactive scripture verse size on mobile */
+  .interactive-verse-text {
+    font-size: 1.12rem !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Cards padding tailored for iPhone */
+  .card {
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+  }
+
+  /* Minimum 44px touch targets for accessibility */
   .btn {
     min-height: 44px;
     font-size: 0.88rem;
   }
-
-  /* Modals slide from bottom on mobile like native bottom sheets */
-  .modal-overlay {
-    align-items: flex-end;
-    padding: 0;
-  }
-
-  .modal-content {
-    max-height: 85vh;
-    border-radius: 24px 24px 0 0;
-    padding: 1.5rem 1.25rem 2.5rem;
-  }
-
-  /* Compact headings on phone */
-  h1 {
-    font-size: 1.65rem !important;
-  }
-
-  h2 {
-    font-size: 1.35rem !important;
-  }
-
-  .card {
-    padding: 1.15rem;
-  }
 }
+
