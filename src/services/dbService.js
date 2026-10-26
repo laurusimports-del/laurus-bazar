@@ -1,86 +1,104 @@
-import { supabase, isSupabaseConfigured } from '../utils/supabaseClient';
+import { supabase } from '../utils/supabaseClient';
 import { INITIAL_FLASHCARDS } from '../data/initialFlashcardsData';
 
-// Local storage backup keys
-const LOCAL_COUPLE_KEY = 'grace_fluency_active_couple_v1';
-const LOCAL_CONFIG_KEY = 'grace_fluency_system_config_v1';
-const LOCAL_ADMIN_KEY = 'grace_fluency_admin_session_v1';
+// Cache local apenas para abrir o app instantaneamente; a fonte da verdade é o Supabase.
+const CACHE_KEY = 'grace_fluency_cache_v2';
 
-// Starter flashcards with clean 0-progress state
-const getCleanStarterFlashcards = () => {
-  return INITIAL_FLASHCARDS.map(card => ({
+const PROGRESS_FIELDS = [
+  'streak',
+  'last_study_date',
+  'points',
+  'completed_devotionals',
+  'memorized_verses',
+  'flashcards',
+  'completed_quizzes',
+  'favorite_songs',
+  'study_history',
+  'weekly_goal'
+];
+
+const COUPLE_EDITABLE_FIELDS = [
+  'husband_name',
+  'husband_emoji',
+  'husband_level',
+  'wife_name',
+  'wife_emoji',
+  'wife_level',
+  'couple_goal',
+  'preferences'
+];
+
+const getStarterFlashcards = () =>
+  INITIAL_FLASHCARDS.map(card => ({
     ...card,
     box: 1,
     lastReviewed: null,
     nextReviewDate: new Date().toISOString()
   }));
+
+const emptyProgress = (role) => ({
+  role,
+  streak: 0,
+  last_study_date: null,
+  points: 0,
+  completed_devotionals: [],
+  memorized_verses: [],
+  flashcards: [],
+  completed_quizzes: [],
+  favorite_songs: [],
+  study_history: [],
+  weekly_goal: { targetDevotionals: 5, targetFlashcards: 25 }
+});
+
+const isBrandNewProfile = (p) =>
+  !(p.flashcards?.length) && !(p.points) && !(p.study_history?.length) && !(p.completed_devotionals?.length);
+
+const friendlyError = (error) => {
+  const msg = (error?.message || '').toLowerCase();
+  if (msg.includes('invalid login credentials')) return 'Email ou senha incorretos.';
+  if (msg.includes('email not confirmed')) return 'Seu email ainda não foi confirmado. Abra o link que enviamos para sua caixa de entrada (veja também o spam).';
+  if (msg.includes('already registered') || msg.includes('already been registered')) return 'Este email já está cadastrado. Use a aba "Já Temos Conta".';
+  if (msg.includes('password should be at least') || msg.includes('password is too short')) return 'A senha precisa ter pelo menos 6 caracteres.';
+  if (msg.includes('rate limit') || msg.includes('too many')) return 'Muitas tentativas seguidas. Aguarde alguns minutos e tente novamente.';
+  if (msg.includes('database error saving new user')) return 'O banco recusou o cadastro (código de convite inválido ou banco ainda não configurado).';
+  if (msg.includes('unable to validate email') || msg.includes('invalid email')) return 'Email inválido.';
+  if (msg.includes('failed to fetch') || msg.includes('network')) return 'Sem conexão com o servidor. Verifique sua internet.';
+  return error?.message || 'Erro inesperado. Tente novamente.';
 };
 
 class DatabaseService {
   constructor() {
-    this.isOnline = isSupabaseConfigured();
+    this.saveQueues = {};
+    this.pendingSaves = 0;
   }
 
-  // 1. Obter configurações do sistema (Código Mestre, Aprovação & Credenciais Admin)
-  async getSystemConfig() {
-    if (this.isOnline && supabase) {
-      try {
-        const { data, error } = await supabase
-          .from('system_config')
-          .select('*')
-          .eq('id', 'main')
-          .single();
-
-        if (!error && data) {
-          localStorage.setItem(LOCAL_CONFIG_KEY, JSON.stringify(data));
-          return data;
-        }
-      } catch (e) {
-        console.warn('Falha ao buscar config do Supabase, usando local:', e);
-      }
+  ensureClient() {
+    if (!supabase) {
+      throw new Error('Supabase não configurado (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY ausentes).');
     }
-
-    try {
-      const saved = localStorage.getItem(LOCAL_CONFIG_KEY);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-
-    return {
-      master_invite_code: 'GRACE2026',
-      require_admin_approval: true,
-      admin_email: 'admin@gracefluency.com',
-      admin_password: 'admin2026'
-    };
   }
 
-  // 2. Atualizar Código Mestre de Convite e Regras (Admin Only)
-  async updateSystemConfig(configUpdates) {
-    const current = await this.getSystemConfig();
-    const newConfig = {
-      id: 'main',
-      master_invite_code: (configUpdates.masterInviteCode ?? current.master_invite_code).trim().toUpperCase(),
-      require_admin_approval: Boolean(configUpdates.requireAdminApproval ?? current.require_admin_approval),
-      admin_email: (configUpdates.adminEmail ?? current.admin_email).trim().toLowerCase(),
-      admin_password: (configUpdates.adminPassword ?? current.admin_password).trim(),
-      updated_at: new Date().toISOString()
-    };
-
-    localStorage.setItem(LOCAL_CONFIG_KEY, JSON.stringify(newConfig));
-
-    if (this.isOnline && supabase) {
-      try {
-        await supabase
-          .from('system_config')
-          .upsert(newConfig);
-      } catch (e) {
-        console.error('Erro ao atualizar config no Supabase:', e);
-      }
-    }
-
-    return newConfig;
+  hasPendingSaves() {
+    return this.pendingSaves > 0;
   }
 
-  // 3. Cadastrar Novo Casal com EMAIL e SENHA (com progresso 100% ZERADO)
+  // Executa gravações do mesmo registro em fila, para uma gravação antiga nunca sobrescrever uma nova.
+  enqueue(key, task) {
+    this.pendingSaves += 1;
+    const run = (this.saveQueues[key] || Promise.resolve())
+      .catch(() => {})
+      .then(task)
+      .finally(() => {
+        this.pendingSaves -= 1;
+      });
+    this.saveQueues[key] = run;
+    return run;
+  }
+
+  // ---------------------------------------------------------------------------
+  // CADASTRO / LOGIN
+  // ---------------------------------------------------------------------------
+
   async registerCouple({
     email,
     password,
@@ -92,441 +110,296 @@ class DatabaseService {
     wifeLevel = 'Iniciante',
     inviteCode = ''
   }) {
-    const cleanEmail = (email || '').trim().toLowerCase();
-    const cleanPassword = (password || '').trim();
+    try {
+      this.ensureClient();
+      const cleanEmail = (email || '').trim().toLowerCase();
 
-    if (!cleanEmail || !cleanPassword) {
-      return { success: false, message: 'Informe o email e uma senha de acesso.' };
-    }
-
-    const config = await this.getSystemConfig();
-
-    // Verificar se já existe algum casal no banco para definir se é o primeiro (Admin Master)
-    let isFirstCouple = false;
-    let emailAlreadyExists = false;
-
-    if (this.isOnline && supabase) {
-      try {
-        // Verificar se email já existe
-        const { data: existingUser } = await supabase
-          .from('couples')
-          .select('id')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-
-        if (existingUser) {
-          emailAlreadyExists = true;
-        }
-
-        // Verificar contagem geral
-        const { count, error } = await supabase
-          .from('couples')
-          .select('id', { count: 'exact', head: true });
-
-        if (!error && (count === 0 || count === null)) {
-          isFirstCouple = true;
-        }
-      } catch (e) {
-        console.warn('Erro ao checar Supabase na criação:', e);
-      }
-    } else {
-      // Verificação Local
-      const localCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
-      if (localCouples.length === 0) isFirstCouple = true;
-      if (localCouples.some(c => c.email === cleanEmail)) {
-        emailAlreadyExists = true;
-      }
-    }
-
-    if (emailAlreadyExists) {
-      return {
-        success: false,
-        message: 'Este email já está cadastrado. Alterne para a aba "Já Temos Conta" para entrar.'
-      };
-    }
-
-    // Se NÃO for o primeiro casal, validar código de convite
-    if (!isFirstCouple) {
-      const expectedCode = (config.master_invite_code || 'GRACE2026').trim().toUpperCase();
-      const providedCode = (inviteCode || '').trim().toUpperCase();
-
-      if (providedCode !== expectedCode) {
+      // 1. Valida o convite no banco (resposta limpa antes de criar o login)
+      const { data: inviteOk, error: inviteErr } = await supabase.rpc('check_invite_code', { code: inviteCode || '' });
+      if (inviteErr) {
         return {
           success: false,
-          message: 'Código de Convite inválido! Solicite o código de acesso ao administrador.'
+          message: 'Não foi possível validar o convite. Verifique se o script supabase_schema.sql já foi executado no Supabase.'
         };
       }
-    }
-
-    // Primeiro casal é aprovado e admin automático; outros casais dependem da aprovação
-    const isAdmin = isFirstCouple;
-    const initialStatus = isFirstCouple ? 'approved' : (config.require_admin_approval ? 'pending' : 'approved');
-
-    const coupleId = `couple_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-    const coupleRecord = {
-      id: coupleId,
-      email: cleanEmail,
-      password: cleanPassword,
-      couple_pin: cleanPassword, // compatibilidade
-      husband_name: husbandName.trim(),
-      husband_emoji: husbandEmoji.trim() || '👨‍💻',
-      husband_level: husbandLevel,
-      wife_name: wifeName.trim(),
-      wife_emoji: wifeEmoji.trim() || '👩‍💼',
-      wife_level: wifeLevel,
-      is_admin: isAdmin,
-      status: initialStatus,
-      couple_goal: {
-        title: 'Estudo em Casal: 7 Dias de Fé & Fluência',
-        targetDays: 7,
-        loveNote: '“Juntos somos mais fortes e mais sábios na Palavra.” ❤️'
-      },
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    // PROGRESSÃO TOTALMENTE ZERADA
-    const husbandProgress = {
-      id: `${coupleId}_husband`,
-      couple_id: coupleId,
-      role: 'husband',
-      streak: 0,
-      last_study_date: null,
-      points: 0,
-      completed_devotionals: [],
-      memorized_verses: [],
-      flashcards: getCleanStarterFlashcards(),
-      completed_quizzes: [],
-      favorite_songs: [],
-      study_history: [],
-      weekly_goal: { targetDevotionals: 5, targetFlashcards: 25 },
-      updated_at: new Date().toISOString()
-    };
-
-    const wifeProgress = {
-      id: `${coupleId}_wife`,
-      couple_id: coupleId,
-      role: 'wife',
-      streak: 0,
-      last_study_date: null,
-      points: 0,
-      completed_devotionals: [],
-      memorized_verses: [],
-      flashcards: getCleanStarterFlashcards(),
-      completed_quizzes: [],
-      favorite_songs: [],
-      study_history: [],
-      weekly_goal: { targetDevotionals: 5, targetFlashcards: 25 },
-      updated_at: new Date().toISOString()
-    };
-
-    // Salvar no Supabase
-    if (this.isOnline && supabase) {
-      try {
-        const { error: cErr } = await supabase.from('couples').insert(coupleRecord);
-        if (cErr) throw cErr;
-
-        const { error: pErr } = await supabase.from('profiles_progress').insert([husbandProgress, wifeProgress]);
-        if (pErr) throw pErr;
-      } catch (err) {
-        console.error('Erro ao salvar casal no Supabase:', err);
+      if (!inviteOk) {
+        return { success: false, message: 'Código de convite inválido! Peça o código ao administrador da plataforma.' };
       }
-    }
 
-    // Salvar no LocalStorage
-    const fullSession = {
-      couple: coupleRecord,
-      profiles: {
-        husband: husbandProgress,
-        wife: wifeProgress
+      // 2. Cria o login no Supabase Auth; o gatilho do banco cria o casal + 2 perfis zerados
+      const { data, error } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
+          data: {
+            husband_name: husbandName.trim(),
+            husband_emoji: husbandEmoji.trim(),
+            husband_level: husbandLevel,
+            wife_name: wifeName.trim(),
+            wife_emoji: wifeEmoji.trim(),
+            wife_level: wifeLevel,
+            invite_code: (inviteCode || '').trim()
+          }
+        }
+      });
+
+      if (error) return { success: false, message: friendlyError(error) };
+
+      // Supabase devolve identities vazio quando o email já existe (com confirmação ativa)
+      if (data?.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+        return { success: false, message: 'Este email já está cadastrado. Use a aba "Já Temos Conta".' };
       }
-    };
 
-    // Armazenar na lista de casais locais também
-    try {
-      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
-      allCouples.push(coupleRecord);
-      localStorage.setItem('grace_fluency_all_couples', JSON.stringify(allCouples));
-    } catch (e) {}
+      // Confirmação de email ativada no Supabase: ainda não há sessão
+      if (!data?.session) {
+        return {
+          success: true,
+          needsEmailConfirmation: true,
+          message: `Conta criada! Enviamos um link de confirmação para ${cleanEmail}. Confirme o email e depois entre pela aba "Já Temos Conta".`
+        };
+      }
 
-    if (initialStatus === 'approved') {
-      localStorage.setItem(LOCAL_COUPLE_KEY, JSON.stringify(fullSession));
+      return await this.loadCurrentSession();
+    } catch (e) {
+      return { success: false, message: friendlyError(e) };
     }
-
-    return {
-      success: true,
-      data: fullSession,
-      status: initialStatus,
-      isAdmin,
-      message: initialStatus === 'pending'
-        ? 'Cadastro realizado com sucesso! Sua conta está aguardando liberação do administrador para proteger o banco de dados.'
-        : 'Cadastro realizado com sucesso! Bem-vindos à plataforma!'
-    };
   }
 
-  // 4. Login do Casal por EMAIL e SENHA
   async loginCouple(email, password) {
-    const cleanEmail = (email || '').trim().toLowerCase();
-    const cleanPassword = (password || '').trim();
-
-    if (!cleanEmail || !cleanPassword) {
-      return { success: false, message: 'Digite o email e a senha do casal.' };
-    }
-
-    // Tentar Supabase primeiro
-    if (this.isOnline && supabase) {
-      try {
-        const { data: couple, error } = await supabase
-          .from('couples')
-          .select('*')
-          .eq('email', cleanEmail)
-          .maybeSingle();
-
-        if (!error && couple) {
-          if (couple.password !== cleanPassword && couple.couple_pin !== cleanPassword) {
-            return { success: false, message: 'Senha incorreta. Verifique e tente novamente.' };
-          }
-
-          // Verificar status de aprovação
-          if (couple.status === 'blocked') {
-            return { success: false, message: 'Esta conta foi bloqueada pelo administrador.' };
-          }
-          if (couple.status === 'pending' && !couple.is_admin) {
-            return { 
-              success: false, 
-              isPending: true,
-              message: 'Sua conta ainda está aguardando liberação do administrador. Solicite o acesso a ele!' 
-            };
-          }
-
-          // Buscar progresso dos 2 perfis
-          const { data: progressRows } = await supabase
-            .from('profiles_progress')
-            .select('*')
-            .eq('couple_id', couple.id);
-
-          const husbandProg = progressRows?.find(r => r.role === 'husband') || {
-            streak: 0, points: 0, completed_devotionals: [], memorized_verses: [], flashcards: getCleanStarterFlashcards()
-          };
-          const wifeProg = progressRows?.find(r => r.role === 'wife') || {
-            streak: 0, points: 0, completed_devotionals: [], memorized_verses: [], flashcards: getCleanStarterFlashcards()
-          };
-
-          const session = {
-            couple,
-            profiles: {
-              husband: husbandProg,
-              wife: wifeProg
-            }
-          };
-
-          localStorage.setItem(LOCAL_COUPLE_KEY, JSON.stringify(session));
-          return { success: true, data: session };
-        }
-      } catch (e) {
-        console.warn('Erro ao consultar Supabase no login, tentando fallback local:', e);
-      }
-    }
-
-    // Fallback local se estiver offline
     try {
-      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
-      const couple = allCouples.find(c => c.email === cleanEmail);
-      if (couple) {
-        if (couple.password !== cleanPassword && couple.couple_pin !== cleanPassword) {
-          return { success: false, message: 'Senha incorreta.' };
-        }
-        if (couple.status === 'blocked') {
-          return { success: false, message: 'Esta conta foi desativada.' };
-        }
-        if (couple.status === 'pending' && !couple.is_admin) {
-          return { success: false, isPending: true, message: 'Aguardando liberação do administrador.' };
-        }
+      this.ensureClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: (email || '').trim().toLowerCase(),
+        password
+      });
+      if (error) return { success: false, message: friendlyError(error) };
+      return await this.loadCurrentSession();
+    } catch (e) {
+      return { success: false, message: friendlyError(e) };
+    }
+  }
 
-        const savedSession = localStorage.getItem(LOCAL_COUPLE_KEY);
-        const parsed = savedSession ? JSON.parse(savedSession) : null;
-        const session = {
-          couple,
-          profiles: parsed?.profiles || {
-            husband: { streak: 0, points: 0, completed_devotionals: [], memorized_verses: [], flashcards: getCleanStarterFlashcards() },
-            wife: { streak: 0, points: 0, completed_devotionals: [], memorized_verses: [], flashcards: getCleanStarterFlashcards() }
-          }
+  async hasAuthSession() {
+    if (!supabase) return false;
+    const { data } = await supabase.auth.getSession();
+    return Boolean(data?.session);
+  }
+
+  // Carrega casal + 2 perfis do usuário logado e aplica as regras de acesso.
+  async loadCurrentSession() {
+    try {
+      this.ensureClient();
+      const { data: userData, error: userErr } = await supabase.auth.getUser();
+      const user = userData?.user;
+      if (userErr || !user) return { success: false, message: 'Sessão expirada. Entre novamente.' };
+
+      const { data: couple, error: coupleErr } = await supabase
+        .from('couples')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (coupleErr) {
+        return { success: false, message: `Erro ao ler o banco: ${coupleErr.message}` };
+      }
+      if (!couple) {
+        await supabase.auth.signOut();
+        return { success: false, message: 'Login sem cadastro de casal no banco. Crie a conta novamente ou fale com o administrador.' };
+      }
+      if (couple.status === 'blocked') {
+        await supabase.auth.signOut();
+        return { success: false, message: 'Esta conta foi bloqueada pelo administrador.' };
+      }
+      if (couple.status === 'pending' && !couple.is_admin) {
+        await supabase.auth.signOut();
+        return {
+          success: false,
+          isPending: true,
+          message: 'Cadastro recebido! Sua conta está aguardando a liberação do administrador.'
         };
-
-        localStorage.setItem(LOCAL_COUPLE_KEY, JSON.stringify(session));
-        return { success: true, data: session };
       }
-    } catch (e) {}
 
-    return { success: false, message: 'Email não encontrado. Verifique os dados ou crie uma nova conta.' };
+      const { data: rows, error: progErr } = await supabase
+        .from('profiles_progress')
+        .select('*')
+        .eq('couple_id', user.id);
+
+      if (progErr) {
+        return { success: false, message: `Erro ao carregar o progresso: ${progErr.message}` };
+      }
+
+      const profiles = {};
+      for (const role of ['husband', 'wife']) {
+        const row = rows?.find(r => r.role === role);
+        profiles[role] = { ...emptyProgress(role), ...(row || {}) };
+
+        // Primeiro acesso: entrega o baralho inicial de palavras (progresso continua zerado)
+        if (isBrandNewProfile(profiles[role])) {
+          profiles[role].flashcards = getStarterFlashcards();
+          this.saveProfileProgress(user.id, role, profiles[role]);
+        }
+      }
+
+      const session = { couple, profiles };
+      this.cacheSession(session);
+      return { success: true, data: session };
+    } catch (e) {
+      return { success: false, message: friendlyError(e) };
+    }
   }
 
-  // 5. Login Dedicado do Administrador
-  async loginAdmin(emailOrUser, password) {
-    const cleanUser = (emailOrUser || '').trim().toLowerCase();
-    const cleanPass = (password || '').trim();
-
-    const config = await this.getSystemConfig();
-
-    const expectedAdminEmail = (config.admin_email || 'admin@gracefluency.com').toLowerCase();
-    const expectedAdminPass = (config.admin_password || 'admin2026');
-
-    // Verificar se confere com credencial mestre do admin
-    if ((cleanUser === expectedAdminEmail || cleanUser === 'admin') && cleanPass === expectedAdminPass) {
-      const adminSession = {
-        isAdmin: true,
-        email: expectedAdminEmail,
-        isMasterAdmin: true
-      };
-      localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify(adminSession));
-      return { success: true, adminSession };
-    }
-
-    // Verificar se é uma conta de casal com is_admin = true
-    const coupleLogin = await this.loginCouple(cleanUser, cleanPass);
-    if (coupleLogin.success && coupleLogin.data?.couple?.is_admin) {
-      const adminSession = {
-        isAdmin: true,
-        email: cleanUser,
-        coupleData: coupleLogin.data
-      };
-      localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify(adminSession));
-      return { success: true, adminSession };
-    }
-
-    return { success: false, message: 'Credenciais de administrador inválidas.' };
-  }
-
-  // 6. Salvar Progresso de um Perfil (Sincronizado diretamente no Supabase)
-  async saveProfileProgress(coupleId, role, profileData) {
-    const progressId = `${coupleId}_${role}`;
-    const payload = {
-      id: progressId,
-      couple_id: coupleId,
-      role,
-      streak: profileData.streak || 0,
-      last_study_date: profileData.last_study_date || profileData.lastStudyDate || null,
-      points: profileData.points || 0,
-      completed_devotionals: profileData.completed_devotionals || profileData.completedDevotionals || [],
-      memorized_verses: profileData.memorized_verses || profileData.memorizedVerses || [],
-      flashcards: profileData.flashcards || [],
-      completed_quizzes: profileData.completed_quizzes || profileData.completedQuizzes || [],
-      favorite_songs: profileData.favorite_songs || profileData.favoriteSongs || [],
-      study_history: profileData.study_history || profileData.studyHistory || [],
-      weekly_goal: profileData.weekly_goal || profileData.weeklyGoal || { targetDevotionals: 5, targetFlashcards: 25 },
-      updated_at: new Date().toISOString()
-    };
-
-    if (this.isOnline && supabase) {
+  async logout() {
+    this.clearCache();
+    if (supabase) {
       try {
-        await supabase
+        await supabase.auth.signOut();
+      } catch (e) {
+        console.warn('Erro ao sair:', e);
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // GRAVAÇÕES
+  // ---------------------------------------------------------------------------
+
+  saveProfileProgress(coupleId, role, profileData) {
+    const payload = { updated_at: new Date().toISOString() };
+    PROGRESS_FIELDS.forEach(field => {
+      if (profileData[field] !== undefined) payload[field] = profileData[field];
+    });
+
+    return this.enqueue(`progress:${coupleId}:${role}`, async () => {
+      try {
+        this.ensureClient();
+        const { data, error } = await supabase
           .from('profiles_progress')
-          .upsert(payload);
+          .update(payload)
+          .eq('couple_id', coupleId)
+          .eq('role', role)
+          .select('couple_id');
+
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Nenhuma linha atualizada (sem permissão ou conta não aprovada).');
+        return { success: true };
       } catch (e) {
-        console.warn('Erro ao salvar progresso no Supabase:', e);
+        console.error('Falha ao salvar progresso no Supabase:', e);
+        return { success: false, message: friendlyError(e) };
       }
-    }
+    });
   }
 
-  // 7. Salvar Dados do Casal (Metas, Recadinho, Nomes)
-  async saveCoupleData(coupleId, coupleUpdates) {
-    if (this.isOnline && supabase) {
-      try {
-        await supabase
-          .from('couples')
-          .update({
-            ...coupleUpdates,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', coupleId);
-      } catch (e) {
-        console.warn('Erro ao salvar dados do casal no Supabase:', e);
-      }
-    }
-  }
+  saveCoupleData(coupleId, updates) {
+    const payload = {};
+    COUPLE_EDITABLE_FIELDS.forEach(field => {
+      if (updates[field] !== undefined) payload[field] = updates[field];
+    });
 
-  // 8. Listar todos os casais cadastrados (Painel Admin)
-  async getAllCouples() {
-    if (this.isOnline && supabase) {
+    return this.enqueue(`couple:${coupleId}`, async () => {
       try {
+        this.ensureClient();
         const { data, error } = await supabase
           .from('couples')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .update(payload)
+          .eq('id', coupleId)
+          .select('id');
 
-        if (!error && data) {
-          return data;
-        }
+        if (error) throw error;
+        if (!data || data.length === 0) throw new Error('Nenhuma linha atualizada (sem permissão).');
+        return { success: true };
       } catch (e) {
-        console.warn('Erro ao buscar casais no Supabase:', e);
+        console.error('Falha ao salvar dados do casal no Supabase:', e);
+        return { success: false, message: friendlyError(e) };
       }
-    }
-
-    // Fallback local
-    try {
-      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
-      if (allCouples.length > 0) return allCouples;
-
-      const active = localStorage.getItem(LOCAL_COUPLE_KEY);
-      if (active) {
-        const parsed = JSON.parse(active);
-        return [parsed.couple];
-      }
-    } catch (e) {}
-
-    return [];
+    });
   }
 
-  // 9. Aprovar ou Bloquear um Casal (Admin)
-  async updateCoupleStatus(coupleId, newStatus) {
-    if (this.isOnline && supabase) {
-      try {
-        const { error } = await supabase
-          .from('couples')
-          .update({ status: newStatus, updated_at: new Date().toISOString() })
-          .eq('id', coupleId);
+  // ---------------------------------------------------------------------------
+  // ADMIN (protegido por RLS: só funciona para contas com is_admin = true)
+  // ---------------------------------------------------------------------------
 
-        if (!error) return { success: true };
-      } catch (e) {
-        console.error('Erro ao atualizar status do casal no Supabase:', e);
-      }
-    }
+  async getSystemConfig() {
+    this.ensureClient();
+    const { data, error } = await supabase
+      .from('system_config')
+      .select('master_invite_code, require_admin_approval')
+      .eq('id', 'main')
+      .maybeSingle();
+    if (error) throw error;
+    return data || { master_invite_code: '', require_admin_approval: true };
+  }
 
-    // Atualizar no local storage também
-    try {
-      const allCouples = JSON.parse(localStorage.getItem('grace_fluency_all_couples') || '[]');
-      const updated = allCouples.map(c => c.id === coupleId ? { ...c, status: newStatus } : c);
-      localStorage.setItem('grace_fluency_all_couples', JSON.stringify(updated));
-    } catch (e) {}
+  async updateSystemConfig({ masterInviteCode, requireAdminApproval }) {
+    this.ensureClient();
+    const code = (masterInviteCode || '').trim().toUpperCase();
+    if (code.length < 4) return { success: false, message: 'O código de convite precisa ter pelo menos 4 caracteres.' };
 
+    const { data, error } = await supabase
+      .from('system_config')
+      .update({
+        master_invite_code: code,
+        require_admin_approval: Boolean(requireAdminApproval),
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', 'main')
+      .select('id');
+
+    if (error) return { success: false, message: friendlyError(error) };
+    if (!data || data.length === 0) return { success: false, message: 'Sem permissão de administrador.' };
     return { success: true };
   }
 
-  // Obter sessões salvas no navegador
-  getLocalSession() {
+  async getAllCouples() {
+    this.ensureClient();
+    const { data, error } = await supabase
+      .from('couples')
+      .select('id, email, husband_name, husband_emoji, husband_level, wife_name, wife_emoji, wife_level, is_admin, status, created_at')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async updateCoupleStatus(coupleId, newStatus) {
+    this.ensureClient();
+    const { data, error } = await supabase
+      .from('couples')
+      .update({ status: newStatus })
+      .eq('id', coupleId)
+      .select('id, status');
+
+    if (error) return { success: false, message: friendlyError(error) };
+    if (!data || data.length === 0 || data[0].status !== newStatus) {
+      return { success: false, message: 'O banco não aceitou a alteração (sem permissão de administrador).' };
+    }
+    return { success: true };
+  }
+
+  // ---------------------------------------------------------------------------
+  // CACHE LOCAL
+  // ---------------------------------------------------------------------------
+
+  getCachedSession() {
     try {
-      const saved = localStorage.getItem(LOCAL_COUPLE_KEY);
+      const saved = localStorage.getItem(CACHE_KEY);
       if (saved) return JSON.parse(saved);
     } catch (e) {}
     return null;
   }
 
-  getAdminSession() {
+  cacheSession(session) {
     try {
-      const saved = localStorage.getItem(LOCAL_ADMIN_KEY);
-      if (saved) return JSON.parse(saved);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(session));
     } catch (e) {}
-    return null;
   }
 
-  clearAdminSession() {
-    localStorage.removeItem(LOCAL_ADMIN_KEY);
-  }
-
-  clearLocalSession() {
-    localStorage.removeItem(LOCAL_COUPLE_KEY);
-    localStorage.removeItem(LOCAL_ADMIN_KEY);
+  clearCache() {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+      // Limpa resíduos das versões antigas (que guardavam senhas no navegador)
+      ['grace_fluency_active_couple_v1', 'grace_fluency_system_config_v1', 'grace_fluency_admin_session_v1', 'grace_fluency_all_couples']
+        .forEach(k => localStorage.removeItem(k));
+    } catch (e) {}
   }
 }
 

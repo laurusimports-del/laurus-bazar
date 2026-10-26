@@ -15,8 +15,8 @@ import {
 import { useUser } from '../../context/UserContext';
 
 export const AuthScreen = () => {
-  const { registerCouple, loginCouple, loginAdmin } = useUser();
-  const [mode, setMode] = useState('register'); // 'register' | 'login' | 'admin'
+  const { registerCouple, loginCouple, loginAdmin, authNotice } = useUser();
+  const [mode, setMode] = useState('login'); // 'register' | 'login' | 'admin'
 
   // Register Form State
   const [email, setEmail] = useState('');
@@ -34,13 +34,26 @@ export const AuthScreen = () => {
   const [loginPassword, setLoginPassword] = useState('');
 
   // Admin Login State
-  const [adminUser, setAdminUser] = useState('admin@gracefluency.com');
-  const [adminPassword, setAdminPassword] = useState('admin2026');
+  const [adminUser, setAdminUser] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
 
   // Status & Feedback
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [pendingSuccessMsg, setPendingSuccessMsg] = useState('');
+
+  React.useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('invite');
+        if (code) {
+          setInviteCode(code.toUpperCase().trim());
+          setMode('register');
+        }
+      }
+    } catch (e) {}
+  }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -54,6 +67,11 @@ export const AuthScreen = () => {
 
     if (!husbandName.trim() || !wifeName.trim()) {
       setErrorMsg('Por favor, preencha o nome do esposo e da esposa.');
+      return;
+    }
+
+    if (password.trim().length < 6) {
+      setErrorMsg('A senha precisa ter pelo menos 6 caracteres.');
       return;
     }
 
@@ -71,10 +89,12 @@ export const AuthScreen = () => {
         inviteCode
       });
 
-      if (!res.success) {
-        setErrorMsg(res.message);
-      } else if (res.status === 'pending') {
+      if (res.isPending || res.needsEmailConfirmation) {
         setPendingSuccessMsg(res.message);
+        setLoginEmail(email.trim());
+        setMode('login');
+      } else if (!res.success) {
+        setErrorMsg(res.message);
       }
     } catch (err) {
       setErrorMsg('Erro inesperado ao realizar cadastro. Tente novamente.');
@@ -96,7 +116,9 @@ export const AuthScreen = () => {
     setLoading(true);
     try {
       const res = await loginCouple(loginEmail, loginPassword);
-      if (!res.success) {
+      if (res.isPending) {
+        setPendingSuccessMsg(res.message);
+      } else if (!res.success) {
         setErrorMsg(res.message);
       }
     } catch (err) {
@@ -112,7 +134,7 @@ export const AuthScreen = () => {
     setPendingSuccessMsg('');
 
     if (!adminUser.trim() || !adminPassword.trim()) {
-      setErrorMsg('Digite o usuário e senha de administrador.');
+      setErrorMsg('Digite o email e a senha da conta administradora.');
       return;
     }
 

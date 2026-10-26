@@ -20,14 +20,15 @@ const MainApp = () => {
   const { 
     isAuthenticated, 
     isAdmin, 
-    isMasterAdminOnly, 
+    adminMode, 
+    setAdminMode,
     logout, 
     currentProfileName, 
     spouseProfileName 
   } = useUser();
 
   // Se logado no Modo Administrador Dedicado (sem casal ativo)
-  if (isMasterAdminOnly) {
+  if (adminMode && isAdmin) {
     return (
       <div className="app-container">
         <header style={{
@@ -51,14 +52,23 @@ const MainApp = () => {
               Grace & Fluency
             </span>
           </div>
-          <button 
-            onClick={logout} 
-            className="btn btn-outline" 
-            style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-          >
-            <LogOut size={14} color="var(--color-rose)" />
-            Encerrar Sessão Admin
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <button 
+              onClick={() => setAdminMode(false)} 
+              className="btn btn-gold" 
+              style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
+            >
+              Ir para o App do Casal
+            </button>
+            <button 
+              onClick={logout} 
+              className="btn btn-outline" 
+              style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            >
+              <LogOut size={14} color="var(--color-rose)" />
+              Sair
+            </button>
+          </div>
         </header>
         <main className="main-content">
           <AdminPanel />

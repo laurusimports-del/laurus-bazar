@@ -26,7 +26,8 @@ export const DevotionalsView = () => {
   const [showDevotionalPt, setShowDevotionalPt] = useState(true);
 
   const activeDevotional = DEVOTIONALS_DATA.find(d => d.id === selectedDayId) || DEVOTIONALS_DATA[0];
-  const isCompleted = currentProfileData?.completedDevotionals?.includes(activeDevotional.id);
+  const completedList = currentProfileData?.completed_devotionals || currentProfileData?.completedDevotionals || [];
+  const isCompleted = completedList.includes(activeDevotional.id);
 
   const [isReadingPt, setIsReadingPt] = useState(false);
 
@@ -100,7 +101,7 @@ export const DevotionalsView = () => {
       }}>
         {DEVOTIONALS_DATA.map((item) => {
           const isCurrent = item.id === activeDevotional.id;
-          const isDone = currentProfileData?.completedDevotionals?.includes(item.id);
+          const isDone = completedList.includes(item.id);
 
           return (
             <button
