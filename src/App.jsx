@@ -10,6 +10,7 @@ import { AITutorView } from './components/AITutor/AITutorView';
 import { CoupleDashboard } from './components/CoupleHub/CoupleDashboard';
 import { AdminPanel } from './components/Admin/AdminPanel';
 import { SettingsModal } from './components/Settings/SettingsModal';
+import { WordSelectionPopup } from './components/Common/WordSelectionPopup';
 import { Heart, LogOut, ShieldCheck, ArrowLeft } from 'lucide-react';
 import './styles/theme.css';
 import './styles/app.css';
@@ -206,6 +207,9 @@ const MainApp = () => {
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
       />
+
+      {/* Floating Word Inspector: Select/Release over any word to see translation, audio & add to flashcards */}
+      <WordSelectionPopup />
     </div>
   );
 };
