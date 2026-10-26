@@ -49,8 +49,7 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
     { id: 'progress', label: 'Progresso', icon: <BarChart3 size={17} /> },
     { id: 'worship', label: 'Louvores', icon: <Music size={17} /> },
     { id: 'ai-tutor', label: 'Tutor IA', icon: <Bot size={17} /> },
-    { id: 'couple-hub', label: 'Hub Casal', icon: <Heart size={17} /> },
-    ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: <ShieldCheck size={17} /> }] : [])
+    { id: 'couple-hub', label: 'Hub Casal', icon: <Heart size={17} /> }
   ];
 
   return (
@@ -101,7 +100,7 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
                 color: 'var(--color-text-main)',
                 lineHeight: 1.1
               }}>
-                Grace & Fluency
+                Adam's & Fluency
               </div>
               <div style={{ fontSize: '0.68rem', color: 'var(--color-gold)', fontWeight: 700, letterSpacing: '0.04em' }}>
                 INGLÊS & FÉ EM CASAL

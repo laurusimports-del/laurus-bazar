@@ -53,7 +53,40 @@ export const AdminPanel = () => {
         })
       ]);
 
-      setCouples(couplesList || []);
+      const rawList = Array.isArray(couplesList) ? [...couplesList] : [];
+
+      // Garante que o cadastro do Adam & Marcela apareça SEMPRE no topo como Administrador Master!
+      const activeMaster = currentCouple || dbService.getCachedSession()?.couple;
+      if (activeMaster) {
+        const foundIndex = rawList.findIndex(c => 
+          (c.email && activeMaster.email && c.email.toLowerCase() === activeMaster.email.toLowerCase()) || 
+          (c.id && activeMaster.id && c.id === activeMaster.id)
+        );
+        if (foundIndex >= 0) {
+          rawList[foundIndex] = {
+            ...rawList[foundIndex],
+            ...activeMaster,
+            is_admin: true,
+            status: 'approved'
+          };
+        } else {
+          rawList.unshift({
+            id: activeMaster.id || 'master-adam-marcela',
+            email: activeMaster.email || 'lucasadamdeveloper@gmail.com',
+            husband_name: activeMaster.husband_name || 'Adam',
+            husband_emoji: activeMaster.husband_emoji || '👨‍💻',
+            husband_level: activeMaster.husband_level || 'Iniciante',
+            wife_name: activeMaster.wife_name || 'Marcela',
+            wife_emoji: activeMaster.wife_emoji || '👩‍💼',
+            wife_level: activeMaster.wife_level || 'Iniciante',
+            is_admin: true,
+            status: 'approved',
+            created_at: activeMaster.created_at || new Date().toISOString()
+          });
+        }
+      }
+
+      setCouples(rawList);
       if (config?.master_invite_code) {
         setMasterCode(config.master_invite_code);
         setRequireApproval(config.require_admin_approval ?? true);

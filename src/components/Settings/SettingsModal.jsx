@@ -9,13 +9,14 @@ import {
   User, 
   Check, 
   ExternalLink,
-  Sparkles
+  Sparkles,
+  ShieldCheck
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { speechService } from '../../services/speechService';
 
 export const SettingsModal = ({ isOpen, onClose }) => {
-  const { settings, updateSettings, currentCouple, updateCoupleNames, triggerCelebration } = useUser();
+  const { settings, updateSettings, currentCouple, isAdmin, updateCoupleNames, triggerCelebration } = useUser();
 
   const [husbandName, setHusbandName] = useState('');
   const [wifeName, setWifeName] = useState('');
@@ -301,6 +302,42 @@ export const SettingsModal = ({ isOpen, onClose }) => {
               }}
             />
           </div>
+
+          {/* Atalho exclusivo do Administrador */}
+          {isAdmin && (
+            <div style={{
+              background: 'rgba(217, 119, 6, 0.08)',
+              border: '1px solid var(--color-gold)',
+              borderRadius: 'var(--border-radius-md)',
+              padding: '0.85rem 1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '0.5rem'
+            }}>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <ShieldCheck size={16} color="var(--color-gold)" />
+                  Painel de Administração (/admin)
+                </div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)' }}>
+                  Gerencie códigos de convite e libere novos casais cadastrados.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  window.location.hash = '#admin';
+                }}
+                className="btn btn-gold"
+                style={{ fontSize: '0.78rem', padding: '0.4rem 0.85rem' }}
+              >
+                Abrir Painel Admin 🛡️
+              </button>
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
             <button type="button" className="btn btn-outline" onClick={onClose}>

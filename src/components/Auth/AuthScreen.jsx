@@ -14,9 +14,9 @@ import {
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
-export const AuthScreen = () => {
+export const AuthScreen = ({ initialMode = 'login' }) => {
   const { registerCouple, loginCouple, loginAdmin, authNotice } = useUser();
-  const [mode, setMode] = useState('login'); // 'register' | 'login' | 'admin'
+  const [mode, setMode] = useState(initialMode); // 'register' | 'login' | 'admin'
 
   // Register Form State
   const [email, setEmail] = useState('');
@@ -72,6 +72,11 @@ export const AuthScreen = () => {
 
     if (password.trim().length < 6) {
       setErrorMsg('A senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (!inviteCode.trim()) {
+      setErrorMsg('Por favor, informe o código de convite fornecido pelo casal administrador.');
       return;
     }
 
@@ -186,7 +191,7 @@ export const AuthScreen = () => {
             color: 'var(--color-text-main)',
             marginBottom: '0.35rem'
           }}>
-            Grace & Fluency
+            Adam's & Fluency
           </h1>
           <p style={{ fontSize: '0.94rem', color: 'var(--color-text-muted)' }}>
             Plataforma Personalizada de Inglês, Devocionais & Louvores para Casais
@@ -254,28 +259,6 @@ export const AuthScreen = () => {
             >
               <LogIn size={15} />
               Já Temos Conta
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('admin'); setErrorMsg(''); }}
-              style={{
-                padding: '0.65rem 0.65rem',
-                borderRadius: 'var(--border-radius-full)',
-                fontWeight: 700,
-                fontSize: '0.82rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.3rem',
-                background: mode === 'admin' ? 'var(--color-gold)' : 'transparent',
-                color: mode === 'admin' ? '#ffffff' : 'var(--color-text-muted)',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              title="Acesso exclusivo do Administrador para autorizar usuários"
-            >
-              <ShieldCheck size={15} />
-              Admin
             </button>
           </div>
 
@@ -522,35 +505,37 @@ export const AuthScreen = () => {
               {/* Invite Code (Proteção do Banco) */}
               <div style={{
                 background: 'rgba(180, 83, 9, 0.05)',
-                border: '1px dashed var(--color-gold)',
+                border: '1px solid var(--color-gold)',
                 borderRadius: 'var(--border-radius-md)',
-                padding: '0.75rem 1rem'
+                padding: '0.85rem 1rem'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.35rem' }}>
                   <ShieldCheck size={15} color="var(--color-gold)" />
-                  <label style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-gold)' }}>
-                    Código de Convite do Casal
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-gold)' }}>
+                    Código de Convite do Casal *
                   </label>
                 </div>
                 <input
                   type="text"
-                  placeholder="EX: GRACE2026 (opcional para o 1º casal admin)"
+                  required
+                  placeholder="DIGITE O CÓDIGO (EX: GRACE2026)"
                   value={inviteCode}
-                  onChange={e => setInviteCode(e.target.value)}
+                  onChange={e => setInviteCode(e.target.value.toUpperCase().replace(/\s/g, ''))}
                   style={{
                     width: '100%',
-                    padding: '0.6rem 0.8rem',
+                    padding: '0.65rem 0.85rem',
                     borderRadius: 'var(--border-radius-sm)',
                     border: '1px solid var(--border-color)',
                     background: 'var(--bg-surface)',
-                    color: 'var(--color-text-main)',
-                    fontSize: '0.86rem',
+                    color: 'var(--color-gold)',
+                    fontWeight: 800,
+                    fontSize: '0.92rem',
                     textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
+                    letterSpacing: '0.08em'
                   }}
                 />
-                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.25rem' }}>
-                  * Protege o banco de dados contra acessos não autorizados. Se você for o primeiro casal (Admin), pode deixar vazio.
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.35rem' }}>
+                  * Insira o código de convite fornecido pelo casal administrador para autorizar seu cadastro.
                 </span>
               </div>
 
@@ -653,14 +638,14 @@ export const AuthScreen = () => {
 
               <div>
                 <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
-                  Usuário ou Email do Administrador
+                  Email da Conta de Administrador
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
-                    type="text"
+                    type="email"
                     required
                     autoFocus
-                    placeholder="admin@gracefluency.com"
+                    placeholder="lucasadamdeveloper@gmail.com"
                     value={adminUser}
                     onChange={e => setAdminUser(e.target.value)}
                     style={{
