@@ -15,23 +15,36 @@ import { useUser } from '../../context/UserContext';
 
 export const CoupleDashboard = () => {
   const { 
-    data, 
-    currentProfileName, 
-    spouseProfileName, 
+    currentCouple,
+    currentRole,
+    currentProfileData,
+    currentProfileName,
+    currentProfileEmoji,
+    spouseProfileData,
+    spouseProfileName,
+    spouseProfileEmoji,
     coupleGoal, 
     updateLoveNote, 
     triggerCelebration 
   } = useUser();
 
   const [isEditingNote, setIsEditingNote] = useState(false);
-  const [noteText, setNoteText] = useState(coupleGoal.loveNote || '');
+  const [noteText, setNoteText] = useState(coupleGoal?.loveNote || '');
 
-  const husband = data.profiles.husband;
-  const wife = data.profiles.wife;
+  const husbandData = currentRole === 'husband' ? currentProfileData : spouseProfileData;
+  const wifeData = currentRole === 'wife' ? currentProfileData : spouseProfileData;
 
-  const combinedStreak = Math.min(husband.streak, wife.streak);
-  const totalVerses = new Set([...husband.memorizedVerses, ...wife.memorizedVerses]).size;
-  const totalFlashcards = husband.flashcards.length + wife.flashcards.length;
+  const husbandName = currentCouple?.husband_name || 'Esposo';
+  const husbandEmoji = currentCouple?.husband_emoji || '👨‍💻';
+  const wifeName = currentCouple?.wife_name || 'Esposa';
+  const wifeEmoji = currentCouple?.wife_emoji || '👩‍💼';
+
+  const combinedStreak = Math.min(husbandData?.streak || 0, wifeData?.streak || 0);
+  const totalVerses = new Set([
+    ...(husbandData?.memorized_verses || []),
+    ...(wifeData?.memorized_verses || [])
+  ]).size;
+  const totalFlashcards = (husbandData?.flashcards?.length || 0) + (wifeData?.flashcards?.length || 0);
 
   const handleSaveNote = () => {
     updateLoveNote(noteText);
@@ -45,7 +58,7 @@ export const CoupleDashboard = () => {
       title: 'Primeiro Devocional Juntos',
       desc: 'Completaram o primeiro estudo bíblico em inglês',
       icon: '📖',
-      unlocked: husband.completedDevotionals.length > 0 && wife.completedDevotionals.length > 0
+      unlocked: (husbandData?.completed_devotionals?.length > 0) && (wifeData?.completed_devotionals?.length > 0)
     },
     {
       id: 'streak-3',
@@ -59,7 +72,7 @@ export const CoupleDashboard = () => {
       title: 'Vozes em Harmonia',
       desc: 'Aprenderam e favoritaram louvores em inglês',
       icon: '🎵',
-      unlocked: (husband.favoriteSongs?.length > 0) || (wife.favoriteSongs?.length > 0)
+      unlocked: (husbandData?.favorite_songs?.length > 0) || (wifeData?.favorite_songs?.length > 0)
     },
     {
       id: 'vocab-builders',
@@ -84,7 +97,7 @@ export const CoupleDashboard = () => {
           </span>
         </div>
         <h1 style={{ fontSize: '2.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-          Hub do Casal: {data.settings.husbandName} & {data.settings.wifeName}
+          Hub do Casal: {husbandName} & {wifeName}
         </h1>
         <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)' }}>
           Acompanhem o crescimento mútuo na fé e na fluência do inglês como uma só família.
@@ -106,7 +119,7 @@ export const CoupleDashboard = () => {
               </span>
             </div>
             <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '0.5rem' }}>
-              {coupleGoal.title}
+              {coupleGoal?.title || 'Estudo em Casal'}
             </h2>
             <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
               Vocês estão construindo o hábito diário de orar, meditar e aprender inglês lado a lado.
@@ -158,7 +171,7 @@ export const CoupleDashboard = () => {
               </div>
             ) : (
               <p style={{ fontStyle: 'italic', fontSize: '1rem', color: 'var(--color-text-main)', lineHeight: '1.5' }}>
-                {coupleGoal.loveNote}
+                {coupleGoal?.loveNote || '“Juntos somos mais fortes na Palavra.”'}
               </p>
             )}
           </div>
@@ -170,26 +183,26 @@ export const CoupleDashboard = () => {
         {/* Husband Card */}
         <div className="card" style={{ borderTop: '4px solid var(--color-primary)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-            <span style={{ fontSize: '2rem' }}>{data.settings.husbandEmoji}</span>
+            <span style={{ fontSize: '2rem' }}>{husbandEmoji}</span>
             <div>
-              <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>{data.settings.husbandName}</h3>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>{husbandName}</h3>
               <span className="badge badge-indigo">
-                <Flame size={12} fill="currentColor" /> {husband.streak} dias de ofensiva
+                <Flame size={12} fill="currentColor" /> {husbandData?.streak || 0} dias de ofensiva
               </span>
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', textAlign: 'center' }}>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-gold)' }}>{husband.points}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-gold)' }}>{husbandData?.points || 0}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Pontos</div>
             </div>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-primary)' }}>{husband.completedDevotionals.length}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-primary)' }}>{husbandData?.completed_devotionals?.length || 0}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Devocionais</div>
             </div>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{husband.flashcards.length}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{husbandData?.flashcards?.length || 0}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Flashcards</div>
             </div>
           </div>
@@ -198,26 +211,26 @@ export const CoupleDashboard = () => {
         {/* Wife Card */}
         <div className="card" style={{ borderTop: '4px solid var(--color-rose)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-            <span style={{ fontSize: '2rem' }}>{data.settings.wifeEmoji}</span>
+            <span style={{ fontSize: '2rem' }}>{wifeEmoji}</span>
             <div>
-              <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>{data.settings.wifeName}</h3>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>{wifeName}</h3>
               <span className="badge badge-rose">
-                <Flame size={12} fill="currentColor" /> {wife.streak} dias de ofensiva
+                <Flame size={12} fill="currentColor" /> {wifeData?.streak || 0} dias de ofensiva
               </span>
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', textAlign: 'center' }}>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-gold)' }}>{wife.points}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-gold)' }}>{wifeData?.points || 0}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Pontos</div>
             </div>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-primary)' }}>{wife.completedDevotionals.length}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-primary)' }}>{wifeData?.completed_devotionals?.length || 0}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Devocionais</div>
             </div>
             <div style={{ background: 'var(--bg-app)', padding: '0.75rem', borderRadius: 'var(--border-radius-md)' }}>
-              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{wife.flashcards.length}</div>
+              <div style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-emerald)' }}>{wifeData?.flashcards?.length || 0}</div>
               <div style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>Flashcards</div>
             </div>
           </div>

@@ -2,78 +2,95 @@ import React, { useState } from 'react';
 import { 
   Sparkles, 
   Lock, 
-  UserCheck, 
-  Edit3, 
-  Check, 
   Heart, 
-  ArrowRight,
-  Flame,
-  Award
+  ArrowRight, 
+  ShieldCheck, 
+  UserPlus, 
+  LogIn, 
+  KeyRound,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
 export const AuthScreen = () => {
-  const { accounts, login, updateAccount, triggerCelebration } = useUser();
-  const [selectedProfile, setSelectedProfile] = useState(null);
-  const [pinInput, setPinInput] = useState('');
+  const { registerCouple, loginCouple } = useUser();
+  const [mode, setMode] = useState('register'); // 'register' | 'login'
+
+  // Register Form State
+  const [husbandName, setHusbandName] = useState('');
+  const [husbandEmoji, setHusbandEmoji] = useState('👨‍💻');
+  const [husbandLevel, setHusbandLevel] = useState('Iniciante');
+  const [wifeName, setWifeName] = useState('');
+  const [wifeEmoji, setWifeEmoji] = useState('👩‍💼');
+  const [wifeLevel, setWifeLevel] = useState('Iniciante');
+  const [couplePin, setCouplePin] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+
+  // Login Form State
+  const [loginPin, setLoginPin] = useState('');
+
+  // Status & Feedback
+  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-  const [isEditingModal, setIsEditingModal] = useState(false);
-  const [editTarget, setEditTarget] = useState('husband');
+  const [pendingSuccessMsg, setPendingSuccessMsg] = useState('');
 
-  // Edit form state
-  const [editName, setEditName] = useState('');
-  const [editEmoji, setEditEmoji] = useState('');
-  const [editEmail, setEditEmail] = useState('');
-  const [editPin, setEditPin] = useState('');
-  const [editLevel, setEditLevel] = useState('Iniciante');
-
-  const handleSelectAccount = (profileKey) => {
-    setSelectedProfile(profileKey);
+  const handleRegister = async (e) => {
+    e.preventDefault();
     setErrorMsg('');
-    setPinInput('');
+    setPendingSuccessMsg('');
 
-    // If no PIN is configured, login immediately!
-    const account = accounts[profileKey];
-    if (!account.pin) {
-      const res = login(profileKey, '');
+    if (!husbandName.trim() || !wifeName.trim() || !couplePin.trim()) {
+      setErrorMsg('Por favor, preencha o nome do esposo, da esposa e a senha do casal.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await registerCouple({
+        husbandName,
+        husbandEmoji,
+        husbandLevel,
+        wifeName,
+        wifeEmoji,
+        wifeLevel,
+        couplePin,
+        inviteCode
+      });
+
+      if (!res.success) {
+        setErrorMsg(res.message);
+      } else if (res.status === 'pending') {
+        setPendingSuccessMsg(res.message);
+      }
+    } catch (err) {
+      setErrorMsg('Erro inesperado ao realizar cadastro. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+    setPendingSuccessMsg('');
+
+    if (!loginPin.trim()) {
+      setErrorMsg('Digite a senha do casal.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await loginCouple(loginPin);
       if (!res.success) {
         setErrorMsg(res.message);
       }
+    } catch (err) {
+      setErrorMsg('Erro ao conectar. Verifique sua conexão e tente novamente.');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handlePinSubmit = (e) => {
-    e.preventDefault();
-    if (!selectedProfile) return;
-    const res = login(selectedProfile, pinInput);
-    if (!res.success) {
-      setErrorMsg(res.message);
-    }
-  };
-
-  const openEditAccount = (profileKey, e) => {
-    e.stopPropagation();
-    const acc = accounts[profileKey];
-    setEditTarget(profileKey);
-    setEditName(acc.name);
-    setEditEmoji(acc.emoji);
-    setEditEmail(acc.email || '');
-    setEditPin(acc.pin || '');
-    setEditLevel(acc.level || 'Iniciante');
-    setIsEditingModal(true);
-  };
-
-  const handleSaveAccount = (e) => {
-    e.preventDefault();
-    updateAccount(editTarget, {
-      name: editName.trim(),
-      emoji: editEmoji.trim() || '👤',
-      email: editEmail.trim(),
-      pin: editPin.trim(),
-      level: editLevel
-    });
-    setIsEditingModal(false);
-    triggerCelebration();
   };
 
   return (
@@ -83,283 +100,412 @@ export const AuthScreen = () => {
       flexDirection: 'column',
       justifyContent: 'center',
       alignItems: 'center',
-      padding: '1.5rem 1rem',
-      background: 'radial-gradient(circle at 50% 20%, rgba(180, 83, 9, 0.08) 0%, var(--bg-app) 70%)'
+      padding: '2rem 1rem',
+      background: 'radial-gradient(circle at 50% 15%, rgba(180, 83, 9, 0.08) 0%, var(--bg-app) 75%)'
     }}>
-      <div style={{ maxWidth: '520px', width: '100%', textAlign: 'center' }}>
-        {/* Logo and Welcome Header */}
+      <div style={{ maxWidth: '520px', width: '100%' }}>
+        {/* Logo and Brand Header */}
+        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
+          <div style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '16px',
+            background: 'linear-gradient(135deg, #312e81 0%, #b45309 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            margin: '0 auto 0.85rem',
+            boxShadow: 'var(--shadow-gold)'
+          }}>
+            <Sparkles size={28} />
+          </div>
+          <h1 style={{ 
+            fontSize: '2.2rem', 
+            fontWeight: 800, 
+            letterSpacing: '-0.02em', 
+            fontFamily: 'var(--font-heading)',
+            color: 'var(--color-text-main)',
+            marginBottom: '0.35rem'
+          }}>
+            Grace & Fluency
+          </h1>
+          <p style={{ fontSize: '0.94rem', color: 'var(--color-text-muted)' }}>
+            Plataforma Personalizada de Inglês, Devocionais & Louvores para Casais
+          </p>
+        </div>
+
+        {/* Card Switcher (Cadastrar vs Entrar) */}
         <div style={{
-          width: '54px',
-          height: '54px',
-          borderRadius: '16px',
-          background: 'linear-gradient(135deg, #312e81 0%, #b45309 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#fff',
-          margin: '0 auto 1rem',
-          boxShadow: 'var(--shadow-gold)'
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-color)',
+          borderRadius: 'var(--border-radius-xl)',
+          padding: '1.75rem',
+          boxShadow: 'var(--shadow-lg)'
         }}>
-          <Sparkles size={28} />
-        </div>
+          {/* Mode Switcher Tabs */}
+          <div style={{
+            display: 'flex',
+            background: 'var(--bg-app)',
+            padding: '0.35rem',
+            borderRadius: 'var(--border-radius-full)',
+            marginBottom: '1.5rem',
+            border: '1px solid var(--border-color)'
+          }}>
+            <button
+              type="button"
+              onClick={() => { setMode('register'); setErrorMsg(''); }}
+              style={{
+                flex: 1,
+                padding: '0.65rem 0.5rem',
+                borderRadius: 'var(--border-radius-full)',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                background: mode === 'register' ? 'var(--color-primary)' : 'transparent',
+                color: mode === 'register' ? '#ffffff' : 'var(--color-text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <UserPlus size={16} />
+              Criar Conta do Casal
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('login'); setErrorMsg(''); }}
+              style={{
+                flex: 1,
+                padding: '0.65rem 0.5rem',
+                borderRadius: 'var(--border-radius-full)',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.4rem',
+                background: mode === 'login' ? 'var(--color-primary)' : 'transparent',
+                color: mode === 'login' ? '#ffffff' : 'var(--color-text-muted)',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <LogIn size={16} />
+              Já Temos Conta
+            </button>
+          </div>
 
-        <h1 style={{ 
-          fontSize: '2.2rem', 
-          fontWeight: 800, 
-          letterSpacing: '-0.02em', 
-          marginBottom: '0.35rem',
-          fontFamily: 'var(--font-heading)'
-        }}>
-          Grace & Fluency
-        </h1>
-        <p style={{ fontSize: '0.95rem', color: 'var(--color-text-muted)', marginBottom: '2rem' }}>
-          Plataforma de Inglês & Fé do Casal. Quem está estudando agora?
-        </p>
+          {/* Pending Approval Notice */}
+          {pendingSuccessMsg && (
+            <div style={{
+              background: 'var(--color-gold-light)',
+              border: '1px solid var(--color-gold)',
+              borderRadius: 'var(--border-radius-md)',
+              padding: '1rem',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '0.6rem'
+            }}>
+              <CheckCircle2 size={20} color="var(--color-gold)" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '0.88rem', color: 'var(--color-text-main)', lineHeight: '1.5' }}>
+                <strong>{pendingSuccessMsg}</strong>
+                <p style={{ marginTop: '0.35rem', fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                  O administrador da plataforma precisa autorizar sua conta no painel para proteger os recursos do banco de dados. Volte em instantes!
+                </p>
+              </div>
+            </div>
+          )}
 
-        {/* Profile Choice Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-          {['husband', 'wife'].map((key) => {
-            const acc = accounts[key];
-            const isSelected = selectedProfile === key;
+          {/* Error Notice */}
+          {errorMsg && (
+            <div style={{
+              background: 'var(--color-rose-light)',
+              border: '1px solid var(--color-rose)',
+              borderRadius: 'var(--border-radius-md)',
+              padding: '0.85rem 1rem',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              color: 'var(--color-rose)',
+              fontSize: '0.86rem',
+              fontWeight: 600
+            }}>
+              <AlertCircle size={18} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
-            return (
-              <div
-                key={key}
-                onClick={() => handleSelectAccount(key)}
-                style={{
-                  background: 'var(--bg-surface)',
-                  border: isSelected ? '2px solid var(--color-gold)' : '1px solid var(--border-color)',
-                  borderRadius: 'var(--border-radius-xl)',
-                  padding: '1.75rem 1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  position: 'relative',
-                  boxShadow: isSelected ? 'var(--shadow-gold)' : 'var(--shadow-sm)',
-                  transition: 'all 0.2s',
-                  userSelect: 'none'
-                }}
-              >
-                {/* Edit Button */}
-                <button
-                  onClick={(e) => openEditAccount(key, e)}
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    background: 'var(--bg-app)',
-                    border: '1px solid var(--border-color)',
-                    borderRadius: '50%',
-                    padding: '0.35rem',
-                    color: 'var(--color-text-muted)',
-                    cursor: 'pointer'
-                  }}
-                  title="Editar perfil"
-                >
-                  <Edit3 size={13} />
-                </button>
-
-                {/* Avatar Emoji */}
-                <div style={{
-                  width: '68px',
-                  height: '68px',
-                  borderRadius: '50%',
-                  background: key === 'husband' ? 'var(--color-primary-light)' : 'var(--color-rose-light)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2.2rem',
-                  marginBottom: '0.85rem'
-                }}>
-                  {acc.emoji}
+          {/* MODE 1: REGISTER FORM */}
+          {mode === 'register' && (
+            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              {/* Husband Details */}
+              <div style={{ 
+                background: 'var(--bg-app)', 
+                padding: '1rem', 
+                borderRadius: 'var(--border-radius-md)', 
+                border: '1px solid var(--border-color)' 
+              }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
+                  👨 Perfil do Esposo (Ele)
                 </div>
-
-                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.2rem' }}>
-                  {acc.name}
-                </h3>
-                <span className="badge badge-indigo" style={{ fontSize: '0.72rem', marginBottom: '0.5rem' }}>
-                  {acc.role}
-                </span>
-
-                <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted)' }}>
-                  Nível: {acc.level}
-                </div>
-
-                {acc.pin && (
-                  <div style={{ marginTop: '0.6rem', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.72rem', color: 'var(--color-gold)' }}>
-                    <Lock size={12} /> Protegido com PIN
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: '0.5rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.2rem' }}>Nome *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Adam"
+                      value={husbandName}
+                      onChange={e => setHusbandName(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)',
+                        color: 'var(--color-text-main)',
+                        fontSize: '0.88rem'
+                      }}
+                    />
                   </div>
-                )}
+                  <div>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.2rem' }}>Emoji</label>
+                    <input
+                      type="text"
+                      value={husbandEmoji}
+                      onChange={e => setHusbandEmoji(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)',
+                        color: 'var(--color-text-main)',
+                        textAlign: 'center',
+                        fontSize: '1.1rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.2rem' }}>Nível</label>
+                    <select
+                      value={husbandLevel}
+                      onChange={e => setHusbandLevel(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)',
+                        color: 'var(--color-text-main)',
+                        fontSize: '0.82rem'
+                      }}
+                    >
+                      <option value="Iniciante">Iniciante</option>
+                      <option value="Intermediário">Intermediário</option>
+                      <option value="Avançado">Avançado</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* PIN Entry Prompt if selected account has PIN */}
-        {selectedProfile && accounts[selectedProfile]?.pin && (
-          <form 
-            onSubmit={handlePinSubmit}
-            style={{
-              background: 'var(--bg-surface)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--border-radius-lg)',
-              padding: '1.25rem',
-              marginBottom: '1.5rem',
-              animation: 'slideUp 0.2s ease-out'
-            }}
-          >
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-              Digite o PIN de 4 dígitos para {accounts[selectedProfile].name}:
-            </div>
-            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-              <input
-                type="password"
-                maxLength={6}
-                autoFocus
-                placeholder="PIN"
-                value={pinInput}
-                onChange={e => setPinInput(e.target.value)}
-                style={{
-                  width: '140px',
-                  padding: '0.65rem',
-                  fontSize: '1.2rem',
-                  textAlign: 'center',
-                  letterSpacing: '0.3em',
-                  borderRadius: 'var(--border-radius-md)',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-app)',
-                  color: 'var(--color-text-main)'
-                }}
-              />
-              <button type="submit" className="btn btn-gold">
-                Entrar <ArrowRight size={16} />
-              </button>
-            </div>
-            {errorMsg && (
-              <div style={{ color: 'var(--color-rose)', fontSize: '0.82rem', marginTop: '0.5rem', fontWeight: 600 }}>
-                {errorMsg}
+              {/* Wife Details */}
+              <div style={{ 
+                background: 'var(--bg-app)', 
+                padding: '1rem', 
+                borderRadius: 'var(--border-radius-md)', 
+                border: '1px solid var(--border-color)' 
+              }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-rose)', marginBottom: '0.5rem' }}>
+                  👩 Perfil da Esposa (Ela)
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 2fr', gap: '0.5rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.2rem' }}>Nome *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ex: Minha Esposa"
+                      value={wifeName}
+                      onChange={e => setWifeName(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)',
+                        color: 'var(--color-text-main)',
+                        fontSize: '0.88rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.2rem' }}>Emoji</label>
+                    <input
+                      type="text"
+                      value={wifeEmoji}
+                      onChange={e => setWifeEmoji(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)',
+                        color: 'var(--color-text-main)',
+                        textAlign: 'center',
+                        fontSize: '1.1rem'
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.2rem' }}>Nível</label>
+                    <select
+                      value={wifeLevel}
+                      onChange={e => setWifeLevel(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '0.6rem',
+                        borderRadius: 'var(--border-radius-sm)',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-surface)',
+                        color: 'var(--color-text-main)',
+                        fontSize: '0.82rem'
+                      }}
+                    >
+                      <option value="Iniciante">Iniciante</option>
+                      <option value="Intermediário">Intermediário</option>
+                      <option value="Avançado">Avançado</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-            )}
-          </form>
-        )}
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'var(--color-text-muted)', fontSize: '0.85rem' }}>
-          <Heart size={14} color="var(--color-rose)" fill="currentColor" />
-          <span>Contas sincronizadas para o crescimento do casal</span>
-        </div>
-      </div>
-
-      {/* Edit Account Modal */}
-      {isEditingModal && (
-        <div className="modal-overlay" onClick={() => setIsEditingModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '440px' }}>
-            <h2 style={{ fontSize: '1.35rem', fontWeight: 800, marginBottom: '0.25rem' }}>
-              Editar Perfil ({editTarget === 'husband' ? 'Esposo' : 'Esposa'})
-            </h2>
-            <p style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)', marginBottom: '1.25rem' }}>
-              Ajuste seu nome, emoji e nível de inglês.
-            </p>
-
-            <form onSubmit={handleSaveAccount} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+              {/* Password / PIN */}
               <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                  Nome de Exibição
+                <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
+                  Senha de Acesso do Casal *
                 </label>
-                <input
-                  type="text"
-                  required
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem',
-                    borderRadius: 'var(--border-radius-md)',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-app)',
-                    color: 'var(--color-text-main)'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem' }}>
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                    Emoji
-                  </label>
+                <div style={{ position: 'relative' }}>
                   <input
-                    type="text"
-                    value={editEmoji}
-                    onChange={e => setEditEmoji(e.target.value)}
+                    type="password"
+                    required
+                    placeholder="Crie uma senha ou PIN para entrarem juntos"
+                    value={couplePin}
+                    onChange={e => setCouplePin(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '0.65rem',
-                      textAlign: 'center',
-                      fontSize: '1.2rem',
+                      padding: '0.75rem 1rem',
                       borderRadius: 'var(--border-radius-md)',
                       border: '1px solid var(--border-color)',
                       background: 'var(--bg-app)',
-                      color: 'var(--color-text-main)'
+                      color: 'var(--color-text-main)',
+                      fontSize: '0.92rem'
                     }}
                   />
+                  <Lock size={16} color="var(--color-text-light)" style={{ position: 'absolute', right: '12px', top: '13px' }} />
                 </div>
+              </div>
 
-                <div>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                    Nível de Inglês
+              {/* Invite Code (For access control) */}
+              <div style={{
+                background: 'rgba(180, 83, 9, 0.05)',
+                border: '1px dashed var(--color-gold)',
+                borderRadius: 'var(--border-radius-md)',
+                padding: '0.85rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.25rem' }}>
+                  <ShieldCheck size={16} color="var(--color-gold)" />
+                  <label style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--color-gold)' }}>
+                    Código de Convite da Família
                   </label>
-                  <select
-                    value={editLevel}
-                    onChange={e => setEditLevel(e.target.value)}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Ex: GRACE2026 (opcional para o 1º casal admin)"
+                  value={inviteCode}
+                  onChange={e => setInviteCode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 0.85rem',
+                    borderRadius: 'var(--border-radius-sm)',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-surface)',
+                    color: 'var(--color-text-main)',
+                    fontSize: '0.88rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}
+                />
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', display: 'block', marginTop: '0.3rem' }}>
+                  * Protege o banco de dados contra acessos não autorizados. Se você for o primeiro casal (Admin), pode deixar vazio.
+                </span>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-gold"
+                style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', marginTop: '0.5rem' }}
+              >
+                {loading ? 'Criando Conta...' : 'Começar Estudos com Progresso Zerado ✨'}
+              </button>
+            </form>
+          )}
+
+          {/* MODE 2: LOGIN FORM */}
+          {mode === 'login' && (
+            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.4rem' }}>
+                  Senha de Acesso do Casal
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="password"
+                    required
+                    autoFocus
+                    placeholder="Digite a senha ou PIN cadastrado"
+                    value={loginPin}
+                    onChange={e => setLoginPin(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '0.65rem',
+                      padding: '0.85rem 1rem',
                       borderRadius: 'var(--border-radius-md)',
                       border: '1px solid var(--border-color)',
                       background: 'var(--bg-app)',
-                      color: 'var(--color-text-main)'
+                      color: 'var(--color-text-main)',
+                      fontSize: '1rem',
+                      letterSpacing: '0.1em'
                     }}
-                  >
-                    <option value="Iniciante / Básico">Iniciante / Básico</option>
-                    <option value="Intermediário">Intermediário</option>
-                    <option value="Avançado / Fluente">Avançado / Fluente</option>
-                  </select>
+                  />
+                  <KeyRound size={18} color="var(--color-text-light)" style={{ position: 'absolute', right: '14px', top: '14px' }} />
                 </div>
               </div>
 
-              <div>
-                <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.25rem' }}>
-                  PIN de Acesso (Opcional - deixe vazio para entrar sem senha)
-                </label>
-                <input
-                  type="password"
-                  maxLength={6}
-                  placeholder="Ex: 1234"
-                  value={editPin}
-                  onChange={e => setEditPin(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '0.65rem',
-                    borderRadius: 'var(--border-radius-md)',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-app)',
-                    color: 'var(--color-text-main)'
-                  }}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.75rem' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setIsEditingModal(false)}>
-                  Cancelar
-                </button>
-                <button type="submit" className="btn btn-gold">
-                  Salvar Perfil
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn btn-gold"
+                style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem' }}
+              >
+                {loading ? 'Entrando...' : 'Entrar na Plataforma do Casal'}
+              </button>
             </form>
-          </div>
+          )}
         </div>
-      )}
+
+        {/* Footer Note */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', color: 'var(--color-text-muted)', fontSize: '0.82rem', marginTop: '1.5rem' }}>
+          <Heart size={14} color="var(--color-rose)" fill="currentColor" />
+          <span>Contas individuais e conjuntas sincronizadas no Supabase</span>
+        </div>
+      </div>
     </div>
   );
 };

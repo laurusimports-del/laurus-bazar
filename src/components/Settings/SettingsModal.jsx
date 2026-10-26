@@ -15,10 +15,10 @@ import { useUser } from '../../context/UserContext';
 import { speechService } from '../../services/speechService';
 
 export const SettingsModal = ({ isOpen, onClose }) => {
-  const { settings, updateSettings, triggerCelebration } = useUser();
+  const { settings, updateSettings, currentCouple, updateCoupleNames, triggerCelebration } = useUser();
 
-  const [husbandName, setHusbandName] = useState(settings.husbandName);
-  const [wifeName, setWifeName] = useState(settings.wifeName);
+  const [husbandName, setHusbandName] = useState('');
+  const [wifeName, setWifeName] = useState('');
   const [speechRate, setSpeechRate] = useState(settings.speechRate || 0.85);
   const [themeMode, setThemeMode] = useState(settings.themeMode || 'light');
   const [geminiApiKey, setGeminiApiKey] = useState(settings.geminiApiKey || '');
@@ -28,8 +28,8 @@ export const SettingsModal = ({ isOpen, onClose }) => {
 
   useEffect(() => {
     if (isOpen) {
-      setHusbandName(settings.husbandName);
-      setWifeName(settings.wifeName);
+      setHusbandName(currentCouple?.husband_name || '');
+      setWifeName(currentCouple?.wife_name || '');
       setSpeechRate(settings.speechRate || 0.85);
       setThemeMode(settings.themeMode || 'light');
       setGeminiApiKey(settings.geminiApiKey || '');
@@ -40,7 +40,7 @@ export const SettingsModal = ({ isOpen, onClose }) => {
         setSelectedVoiceURI(speechService.selectedVoice.voiceURI);
       }
     }
-  }, [isOpen, settings]);
+  }, [isOpen, settings, currentCouple]);
 
   if (!isOpen) return null;
 
@@ -70,9 +70,11 @@ export const SettingsModal = ({ isOpen, onClose }) => {
       speechService.setVoice(selectedVoiceURI);
     }
 
+    if (husbandName.trim() && wifeName.trim()) {
+      updateCoupleNames(husbandName, wifeName);
+    }
+
     updateSettings({
-      husbandName,
-      wifeName,
       speechRate,
       themeMode,
       geminiApiKey: geminiApiKey.trim()

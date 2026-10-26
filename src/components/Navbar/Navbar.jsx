@@ -12,18 +12,18 @@ import {
   Sparkles,
   BarChart3,
   LogOut,
-  Repeat
+  Repeat,
+  ShieldCheck
 } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 
 export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
   const { 
-    currentProfileKey, 
+    isAdmin,
     currentProfileName, 
     currentProfileEmoji, 
     spouseProfileName, 
-    spouseProfileEmoji,
-    spouseProfileKey,
+    spouseRole,
     switchProfile, 
     currentProfileData,
     settings,
@@ -33,7 +33,7 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
   } = useUser();
 
   const handleToggleProfile = () => {
-    switchProfile(spouseProfileKey);
+    switchProfile(spouseRole);
     triggerCelebration();
   };
 
@@ -50,6 +50,7 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
     { id: 'worship', label: 'Louvores', icon: <Music size={17} /> },
     { id: 'ai-tutor', label: 'Tutor IA', icon: <Bot size={17} /> },
     { id: 'couple-hub', label: 'Hub Casal', icon: <Heart size={17} /> },
+    ...(isAdmin ? [{ id: 'admin', label: 'Admin', icon: <ShieldCheck size={17} /> }] : [])
   ];
 
   return (

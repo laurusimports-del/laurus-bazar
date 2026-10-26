@@ -22,8 +22,7 @@ export const ProgressView = () => {
     currentProfileEmoji,
     spouseProfileData,
     spouseProfileName,
-    spouseProfileEmoji,
-    data 
+    spouseProfileEmoji
   } = useUser();
 
   const [viewMode, setViewMode] = useState('mine'); // 'mine' | 'couple'
@@ -50,11 +49,13 @@ export const ProgressView = () => {
   // Calculate study days in last 28 days
   const today = new Date();
   const past28Days = [];
+  const history = activeData?.study_history || activeData?.studyHistory || [];
+
   for (let i = 27; i >= 0; i--) {
     const d = new Date();
     d.setDate(today.getDate() - i);
     const dateStr = d.toISOString().split('T')[0];
-    const studied = activeData?.studyHistory?.some(h => h.date === dateStr);
+    const studied = history.some(h => h.date === dateStr);
     past28Days.push({
       dateStr,
       dayNum: d.getDate(),
@@ -64,7 +65,9 @@ export const ProgressView = () => {
   }
 
   // Calculate estimated total study minutes
-  const totalMinutes = (activeData?.studyHistory || []).reduce((acc, curr) => acc + (curr.minutes || 0), 0);
+  const totalMinutes = history.reduce((acc, curr) => acc + (curr.minutes || 0), 0);
+  const completedDevotionalsCount = activeData?.completed_devotionals?.length || activeData?.completedDevotionals?.length || 0;
+  const memorizedVersesCount = activeData?.memorized_verses?.length || activeData?.memorizedVerses?.length || 0;
 
   return (
     <div>
@@ -186,10 +189,10 @@ export const ProgressView = () => {
             </span>
           </div>
           <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--color-emerald)', lineHeight: 1 }}>
-            {activeData?.completedDevotionals?.length || 0} lições
+            {completedDevotionalsCount} lições
           </div>
           <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginTop: '0.4rem' }}>
-            {activeData?.memorizedVerses?.length || 0} versículos gravados
+            {memorizedVersesCount} versículos gravados
           </div>
         </div>
 

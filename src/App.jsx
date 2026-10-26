@@ -8,6 +8,7 @@ import { ProgressView } from './components/Progress/ProgressView';
 import { WorshipView } from './components/Worship/WorshipView';
 import { AITutorView } from './components/AITutor/AITutorView';
 import { CoupleDashboard } from './components/CoupleHub/CoupleDashboard';
+import { AdminPanel } from './components/Admin/AdminPanel';
 import { SettingsModal } from './components/Settings/SettingsModal';
 import { Heart } from 'lucide-react';
 import './styles/theme.css';
@@ -16,7 +17,7 @@ import './styles/app.css';
 const MainApp = () => {
   const [activeTab, setActiveTab] = useState('devotionals');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { isAuthenticated, currentProfileName, spouseProfileName } = useUser();
+  const { isAuthenticated, isAdmin, currentProfileName, spouseProfileName } = useUser();
 
   // If user is logged out, show the couple authentication & profile selection screen
   if (!isAuthenticated) {
@@ -40,6 +41,7 @@ const MainApp = () => {
         {activeTab === 'worship' && <WorshipView />}
         {activeTab === 'ai-tutor' && <AITutorView onOpenSettings={() => setIsSettingsOpen(true)} />}
         {activeTab === 'couple-hub' && <CoupleDashboard />}
+        {activeTab === 'admin' && isAdmin && <AdminPanel />}
       </main>
 
       {/* Footer (Subtle on mobile, desktop friendly) */}

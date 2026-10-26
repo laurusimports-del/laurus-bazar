@@ -1,149 +1,88 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { INITIAL_FLASHCARDS } from '../data/initialFlashcardsData';
+import { dbService } from '../services/dbService';
 
 const UserContext = createContext();
 
-const STORAGE_KEY = 'grace_fluency_couple_data_v2';
-
-// Helper to generate initial past study history
-const generateInitialHistory = (daysBack = 14) => {
-  const history = [];
-  const today = new Date();
-  for (let i = daysBack; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(today.getDate() - i);
-    const dateStr = d.toISOString().split('T')[0];
-    // Past days study simulation for streak
-    if (i <= 3 || i === 5 || i === 7 || i === 8 || i === 11) {
-      history.push({
-        date: dateStr,
-        minutes: 15 + (i % 3) * 5,
-        activities: ['devotional', 'flashcards'],
-        points: 40 + (i % 2) * 20
-      });
-    }
-  }
-  return history;
-};
-
-const DEFAULT_STATE = {
-  isAuthenticated: true, // auto login to last active profile
-  currentProfile: 'husband', // 'husband' | 'wife'
-  accounts: {
-    husband: {
-      id: 'husband',
-      name: 'Adam',
-      emoji: '👨‍💻',
-      email: 'adam@casal.com',
-      pin: '', // optional 4-digit PIN
-      level: 'Intermediário',
-      role: 'Esposo'
-    },
-    wife: {
-      id: 'wife',
-      name: 'Minha Esposa',
-      emoji: '👩‍💼',
-      email: 'esposa@casal.com',
-      pin: '',
-      level: 'Iniciante / Básico',
-      role: 'Esposa'
-    }
-  },
-  settings: {
-    geminiApiKey: '',
-    speechRate: 0.85,
-    themeMode: 'light',
-  },
-  coupleGoal: {
-    title: 'Estudo em Casal: 7 Dias de Fé & Fluência',
-    targetDays: 7,
-    loveNote: '“Juntos somos mais fortes e mais sábios na Palavra.” ❤️'
-  },
-  profiles: {
-    husband: {
-      streak: 4,
-      lastStudyDate: new Date().toISOString(),
-      completedDevotionals: ['phil-4-6-7', 'jer-29-11'],
-      memorizedVerses: ['Philippians 4:6-7', 'Jeremiah 29:11'],
-      points: 185,
-      flashcards: [...INITIAL_FLASHCARDS],
-      completedQuizzes: ['phil-4-6-7', 'jer-29-11'],
-      favoriteSongs: ['goodness-of-god'],
-      studyHistory: generateInitialHistory(14),
-      weeklyGoal: { targetDevotionals: 5, targetFlashcards: 25 }
-    },
-    wife: {
-      streak: 4,
-      lastStudyDate: new Date().toISOString(),
-      completedDevotionals: ['phil-4-6-7'],
-      memorizedVerses: ['Philippians 4:6-7'],
-      points: 140,
-      flashcards: [...INITIAL_FLASHCARDS],
-      completedQuizzes: ['phil-4-6-7'],
-      favoriteSongs: ['way-maker'],
-      studyHistory: generateInitialHistory(14),
-      weeklyGoal: { targetDevotionals: 5, targetFlashcards: 25 }
-    }
-  }
-};
-
 export const UserProvider = ({ children }) => {
-  const [data, setData] = useState(() => {
+  const [session, setSession] = useState(() => dbService.getLocalSession());
+  const [activeRole, setActiveRole] = useState('husband'); // 'husband' | 'wife'
+  const [settings, setSettings] = useState(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_STATE,
-          ...parsed,
-          accounts: {
-            husband: { ...DEFAULT_STATE.accounts.husband, ...parsed?.accounts?.husband },
-            wife: { ...DEFAULT_STATE.accounts.wife, ...parsed?.accounts?.wife }
-          },
-          settings: { ...DEFAULT_STATE.settings, ...parsed?.settings },
-          coupleGoal: { ...DEFAULT_STATE.coupleGoal, ...parsed?.coupleGoal },
-          profiles: {
-            husband: { ...DEFAULT_STATE.profiles.husband, ...parsed?.profiles?.husband },
-            wife: { ...DEFAULT_STATE.profiles.wife, ...parsed?.profiles?.wife }
-          }
-        };
-      }
-    } catch (e) {
-      console.error('Failed to load user data from storage:', e);
-    }
-    return DEFAULT_STATE;
+      const s = localStorage.getItem('grace_fluency_settings_v1');
+      if (s) return JSON.parse(s);
+    } catch (e) {}
+    return {
+      geminiApiKey: '',
+      speechRate: 0.85,
+      themeMode: 'light'
+    };
   });
 
+  // Apply dark mode theme class
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      console.error('Failed to save to storage:', e);
-    }
-  }, [data]);
-
-  // Apply dark mode class to document if active
-  useEffect(() => {
-    if (data.settings.themeMode === 'dark') {
+    if (settings.themeMode === 'dark') {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, [data.settings.themeMode]);
+    localStorage.setItem('grace_fluency_settings_v1', JSON.stringify(settings));
+  }, [settings]);
 
-  const currentProfileKey = data.currentProfile;
-  const currentProfileData = data.profiles[currentProfileKey] || data.profiles.husband;
-  const currentAccount = data.accounts[currentProfileKey] || data.accounts.husband;
+  // Derived properties from active session
+  const isAuthenticated = Boolean(session && session.couple && session.couple.id);
+  const currentCouple = session?.couple || null;
+  const isAdmin = Boolean(currentCouple?.is_admin);
 
-  const spouseProfileKey = currentProfileKey === 'husband' ? 'wife' : 'husband';
-  const spouseProfileData = data.profiles[spouseProfileKey] || data.profiles.wife;
-  const spouseAccount = data.accounts[spouseProfileKey] || data.accounts.wife;
+  const currentRole = activeRole;
+  const spouseRole = currentRole === 'husband' ? 'wife' : 'husband';
 
-  const currentProfileName = currentAccount.name;
-  const currentProfileEmoji = currentAccount.emoji;
-  const spouseProfileName = spouseAccount.name;
-  const spouseProfileEmoji = spouseAccount.emoji;
+  // Get active profile progress (with guaranteed default zero values)
+  const currentProfileData = session?.profiles?.[currentRole] || {
+    streak: 0,
+    points: 0,
+    completed_devotionals: [],
+    memorized_verses: [],
+    flashcards: [],
+    completed_quizzes: [],
+    favorite_songs: [],
+    study_history: [],
+    weekly_goal: { targetDevotionals: 5, targetFlashcards: 25 }
+  };
+
+  const spouseProfileData = session?.profiles?.[spouseRole] || {
+    streak: 0,
+    points: 0,
+    completed_devotionals: [],
+    memorized_verses: [],
+    flashcards: [],
+    completed_quizzes: [],
+    favorite_songs: [],
+    study_history: [],
+    weekly_goal: { targetDevotionals: 5, targetFlashcards: 25 }
+  };
+
+  const currentProfileName = currentRole === 'husband' 
+    ? (currentCouple?.husband_name || 'Esposo') 
+    : (currentCouple?.wife_name || 'Esposa');
+
+  const currentProfileEmoji = currentRole === 'husband' 
+    ? (currentCouple?.husband_emoji || '👨‍💻') 
+    : (currentCouple?.wife_emoji || '👩‍💼');
+
+  const spouseProfileName = currentRole === 'husband' 
+    ? (currentCouple?.wife_name || 'Esposa') 
+    : (currentCouple?.husband_name || 'Esposo');
+
+  const spouseProfileEmoji = currentRole === 'husband' 
+    ? (currentCouple?.wife_emoji || '👩‍💼') 
+    : (currentCouple?.husband_emoji || '👨‍💻');
+
+  const coupleGoal = currentCouple?.couple_goal || {
+    title: 'Estudo em Casal: 7 Dias de Fé & Fluência',
+    targetDays: 7,
+    loveNote: '“Juntos somos mais fortes e mais sábios na Palavra.” ❤️'
+  };
 
   const triggerCelebration = () => {
     try {
@@ -156,109 +95,80 @@ export const UserProvider = ({ children }) => {
     } catch (e) {}
   };
 
-  const login = (profileKey, enteredPin = '') => {
-    const targetAccount = data.accounts[profileKey];
-    if (targetAccount?.pin && targetAccount.pin !== enteredPin) {
-      return { success: false, message: 'PIN incorreto. Tente novamente.' };
+  const registerCouple = async (formPayload) => {
+    const res = await dbService.registerCouple(formPayload);
+    if (res.success && res.data) {
+      if (res.status === 'approved') {
+        setSession(res.data);
+        triggerCelebration();
+      }
     }
+    return res;
+  };
 
-    setData(prev => ({
-      ...prev,
-      isAuthenticated: true,
-      currentProfile: profileKey
-    }));
-    triggerCelebration();
-    return { success: true };
+  const loginCouple = async (pin) => {
+    const res = await dbService.loginCouple(pin);
+    if (res.success && res.data) {
+      setSession(res.data);
+      triggerCelebration();
+    }
+    return res;
   };
 
   const logout = () => {
-    setData(prev => ({
-      ...prev,
-      isAuthenticated: false
-    }));
+    dbService.clearLocalSession();
+    setSession(null);
   };
 
-  const switchProfile = (targetProfile) => {
-    setData(prev => ({
-      ...prev,
-      currentProfile: targetProfile
-    }));
+  const switchProfile = (targetRole) => {
+    setActiveRole(targetRole);
   };
 
-  const updateAccount = (profileKey, newAccountData) => {
-    setData(prev => ({
-      ...prev,
-      accounts: {
-        ...prev.accounts,
-        [profileKey]: {
-          ...prev.accounts[profileKey],
-          ...newAccountData
-        }
-      }
-    }));
-  };
+  // Internal helper to update profile progress and sync to Supabase
+  const updateProfileProgress = (updaterFn) => {
+    setSession(prev => {
+      if (!prev) return prev;
+      const currentProgress = prev.profiles[currentRole];
+      const updatedProgress = updaterFn(currentProgress);
 
-  const recordStudyActivity = (activityType, points = 10, minutes = 5) => {
-    const todayStr = new Date().toISOString().split('T')[0];
-
-    setData(prev => {
-      const profile = prev.profiles[prev.currentProfile];
-      const history = [...(profile.studyHistory || [])];
-      const existingEntryIndex = history.findIndex(h => h.date === todayStr);
-
-      if (existingEntryIndex >= 0) {
-        const entry = history[existingEntryIndex];
-        const activities = entry.activities.includes(activityType) 
-          ? entry.activities 
-          : [...entry.activities, activityType];
-        
-        history[existingEntryIndex] = {
-          ...entry,
-          minutes: entry.minutes + minutes,
-          activities,
-          points: entry.points + points
-        };
-      } else {
-        history.push({
-          date: todayStr,
-          minutes,
-          activities: [activityType],
-          points
-        });
-      }
-
-      return {
+      const updatedSession = {
         ...prev,
         profiles: {
           ...prev.profiles,
-          [prev.currentProfile]: {
-            ...profile,
-            studyHistory: history
-          }
+          [currentRole]: updatedProgress
         }
       };
+
+      // Persist locally
+      localStorage.setItem('grace_fluency_active_couple_v1', JSON.stringify(updatedSession));
+
+      // Sync to Supabase in background
+      if (prev.couple?.id) {
+        dbService.saveProfileProgress(prev.couple.id, currentRole, updatedProgress);
+      }
+
+      return updatedSession;
     });
   };
 
+  // Complete Devotional
   const completeDevotional = (devotionalId, verseRef = '') => {
     triggerCelebration();
 
-    setData(prev => {
-      const profile = prev.profiles[prev.currentProfile];
-      const isAlreadyCompleted = profile.completedDevotionals.includes(devotionalId);
-      
-      const updatedDevotionals = isAlreadyCompleted 
-        ? profile.completedDevotionals 
-        : [...profile.completedDevotionals, devotionalId];
+    updateProfileProgress(profile => {
+      const completedList = profile.completed_devotionals || [];
+      const isAlreadyCompleted = completedList.includes(devotionalId);
+      const updatedDevotionals = isAlreadyCompleted ? completedList : [...completedList, devotionalId];
 
-      const updatedVerses = verseRef && !profile.memorizedVerses.includes(verseRef)
-        ? [...profile.memorizedVerses, verseRef]
-        : profile.memorizedVerses;
+      const verseList = profile.memorized_verses || [];
+      const updatedVerses = (verseRef && !verseList.includes(verseRef))
+        ? [...verseList, verseRef]
+        : verseList;
 
       // Update study streak
       const today = new Date().toDateString();
-      const lastStudy = new Date(profile.lastStudyDate).toDateString();
-      let newStreak = profile.streak;
+      const lastStudy = profile.last_study_date ? new Date(profile.last_study_date).toDateString() : null;
+      let newStreak = profile.streak || 0;
 
       if (today !== lastStudy) {
         newStreak += 1;
@@ -266,36 +176,50 @@ export const UserProvider = ({ children }) => {
 
       const pointsEarned = isAlreadyCompleted ? 15 : 50;
 
+      // Record study history entry
+      const todayStr = new Date().toISOString().split('T')[0];
+      const history = [...(profile.study_history || [])];
+      const existingIdx = history.findIndex(h => h.date === todayStr);
+
+      if (existingIdx >= 0) {
+        history[existingIdx] = {
+          ...history[existingIdx],
+          minutes: (history[existingIdx].minutes || 0) + 15,
+          points: (history[existingIdx].points || 0) + pointsEarned
+        };
+      } else {
+        history.push({
+          date: todayStr,
+          minutes: 15,
+          points: pointsEarned,
+          activities: ['devotional']
+        });
+      }
+
       return {
-        ...prev,
-        profiles: {
-          ...prev.profiles,
-          [prev.currentProfile]: {
-            ...profile,
-            streak: newStreak,
-            lastStudyDate: new Date().toISOString(),
-            points: profile.points + pointsEarned,
-            completedDevotionals: updatedDevotionals,
-            memorizedVerses: updatedVerses
-          }
-        }
+        ...profile,
+        streak: newStreak,
+        last_study_date: new Date().toISOString(),
+        points: (profile.points || 0) + pointsEarned,
+        completed_devotionals: updatedDevotionals,
+        memorized_verses: updatedVerses,
+        study_history: history
       };
     });
-
-    recordStudyActivity('devotional', 50, 15);
   };
 
+  // Add Flashcard
   const addFlashcard = (cardData) => {
-    setData(prev => {
-      const profile = prev.profiles[prev.currentProfile];
-      const exists = profile.flashcards.some(c => c.word.toLowerCase() === cardData.word.toLowerCase());
-      if (exists) return prev; // Avoid duplicates
+    updateProfileProgress(profile => {
+      const cards = profile.flashcards || [];
+      const exists = cards.some(c => c.word.toLowerCase() === cardData.word.toLowerCase());
+      if (exists) return profile;
 
       const newCard = {
-        id: `fc-custom-${Date.now()}`,
+        id: `fc-${Date.now()}`,
         word: cardData.word,
         ipa: cardData.ipa || '',
-        category: cardData.category || 'Biblical Study',
+        category: cardData.category || 'Bible Study',
         meaningPt: cardData.meaningPt,
         exampleEn: cardData.exampleEn || '',
         examplePt: cardData.examplePt || '',
@@ -305,25 +229,17 @@ export const UserProvider = ({ children }) => {
       };
 
       return {
-        ...prev,
-        profiles: {
-          ...prev.profiles,
-          [prev.currentProfile]: {
-            ...profile,
-            points: profile.points + 10,
-            flashcards: [newCard, ...profile.flashcards]
-          }
-        }
+        ...profile,
+        points: (profile.points || 0) + 10,
+        flashcards: [newCard, ...cards]
       };
     });
-
-    recordStudyActivity('flashcards', 10, 3);
   };
 
+  // Review Flashcard (SRS)
   const reviewFlashcard = (cardId, rating) => {
-    setData(prev => {
-      const profile = prev.profiles[prev.currentProfile];
-      const updatedCards = profile.flashcards.map(card => {
+    updateProfileProgress(profile => {
+      const cards = (profile.flashcards || []).map(card => {
         if (card.id !== cardId) return card;
 
         let newBox = card.box || 1;
@@ -331,7 +247,7 @@ export const UserProvider = ({ children }) => {
 
         if (rating === 'again') {
           newBox = 1;
-          daysToAdd = 0; // Review soon
+          daysToAdd = 0;
         } else if (rating === 'hard') {
           newBox = Math.max(1, newBox);
           daysToAdd = 1;
@@ -355,89 +271,103 @@ export const UserProvider = ({ children }) => {
       });
 
       return {
-        ...prev,
-        profiles: {
-          ...prev.profiles,
-          [prev.currentProfile]: {
-            ...profile,
-            points: profile.points + 5,
-            flashcards: updatedCards
-          }
-        }
+        ...profile,
+        points: (profile.points || 0) + 5,
+        flashcards: cards
       };
     });
-
-    recordStudyActivity('flashcards', 5, 2);
   };
 
+  // Toggle Favorite Song
   const toggleFavoriteSong = (songId) => {
-    setData(prev => {
-      const profile = prev.profiles[prev.currentProfile];
-      const isFav = profile.favoriteSongs.includes(songId);
+    updateProfileProgress(profile => {
+      const favs = profile.favorite_songs || [];
+      const isFav = favs.includes(songId);
       return {
-        ...prev,
-        profiles: {
-          ...prev.profiles,
-          [prev.currentProfile]: {
-            ...profile,
-            favoriteSongs: isFav 
-              ? profile.favoriteSongs.filter(id => id !== songId)
-              : [...profile.favoriteSongs, songId]
-          }
-        }
+        ...profile,
+        favorite_songs: isFav ? favs.filter(id => id !== songId) : [...favs, songId]
       };
     });
   };
 
+  // Update Settings
   const updateSettings = (newSettings) => {
-    setData(prev => ({
-      ...prev,
-      settings: {
-        ...prev.settings,
-        ...newSettings
-      }
-    }));
+    setSettings(prev => ({ ...prev, ...newSettings }));
   };
 
-  const updateLoveNote = (note) => {
-    setData(prev => ({
-      ...prev,
-      coupleGoal: {
-        ...prev.coupleGoal,
-        loveNote: note
-      }
-    }));
+  // Update Love Note
+  const updateLoveNote = (newNote) => {
+    if (!currentCouple?.id) return;
+    const updatedGoal = {
+      ...coupleGoal,
+      loveNote: newNote
+    };
+
+    setSession(prev => {
+      if (!prev) return prev;
+      const updatedSession = {
+        ...prev,
+        couple: {
+          ...prev.couple,
+          couple_goal: updatedGoal
+        }
+      };
+      localStorage.setItem('grace_fluency_active_couple_v1', JSON.stringify(updatedSession));
+      dbService.saveCoupleData(prev.couple.id, { couple_goal: updatedGoal });
+      return updatedSession;
+    });
+  };
+
+  // Update Couple Names
+  const updateCoupleNames = (husbandName, wifeName) => {
+    if (!currentCouple?.id) return;
+    setSession(prev => {
+      if (!prev) return prev;
+      const updatedCouple = {
+        ...prev.couple,
+        husband_name: husbandName.trim(),
+        wife_name: wifeName.trim()
+      };
+      const updatedSession = {
+        ...prev,
+        couple: updatedCouple
+      };
+      localStorage.setItem('grace_fluency_active_couple_v1', JSON.stringify(updatedSession));
+      dbService.saveCoupleData(prev.couple.id, {
+        husband_name: husbandName.trim(),
+        wife_name: wifeName.trim()
+      });
+      return updatedSession;
+    });
   };
 
   return (
     <UserContext.Provider
       value={{
-        data,
-        isAuthenticated: data.isAuthenticated,
-        accounts: data.accounts,
-        currentAccount,
-        spouseAccount,
-        currentProfileKey,
+        isAuthenticated,
+        currentCouple,
+        isAdmin,
+        currentRole,
+        spouseRole,
         currentProfileData,
+        spouseProfileData,
         currentProfileName,
         currentProfileEmoji,
-        spouseProfileKey,
-        spouseProfileData,
         spouseProfileName,
         spouseProfileEmoji,
-        settings: data.settings,
-        coupleGoal: data.coupleGoal,
-        login,
+        coupleGoal,
+        settings,
+        registerCouple,
+        loginCouple,
         logout,
         switchProfile,
-        updateAccount,
         completeDevotional,
         addFlashcard,
         reviewFlashcard,
         toggleFavoriteSong,
         updateSettings,
         updateLoveNote,
-        recordStudyActivity,
+        updateCoupleNames,
         triggerCelebration
       }}
     >
