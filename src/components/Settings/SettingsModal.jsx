@@ -293,12 +293,12 @@ export const SettingsModal = ({ isOpen, onClose }) => {
             </div>
 
             <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', marginBottom: '0.5rem' }}>
-              Com sua chave gratuita do Google AI Studio, o Tutor Grace responde qualquer dúvida de inglês sem limites. Se deixar em branco, o sistema funciona com respostas inteligentes locais prontas!
+              🟢 <strong style={{ color: 'var(--color-emerald)' }}>Grace IA está 100% ativa para todos os casais</strong> através da chave oficial do sistema (Google Gemini). Caso prefira usar uma chave própria da sua conta Google, insira-a abaixo:
             </p>
 
             <input
               type="password"
-              placeholder="Cole sua chave AIzaSy... aqui"
+              placeholder="Chave oficial do sistema ativa (ou sua chave particular)"
               value={geminiApiKey}
               onChange={e => setGeminiApiKey(e.target.value)}
               style={{

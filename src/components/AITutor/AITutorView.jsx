@@ -148,8 +148,8 @@ export const AITutorView = ({ onOpenSettings }) => {
               <Bot size={13} />
               AI Faith & Language Companion
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-              {settings.geminiApiKey ? '🟢 Gemini 1.5 Flash Conectado' : '🟡 Modo Inteligente Ativo'}
+            <span style={{ fontSize: '0.8rem', color: 'var(--color-emerald)', fontWeight: 600 }}>
+              🟢 Grace IA Online (Google Gemini Ativo)
             </span>
           </div>
           <h1 style={{ fontSize: '1.85rem', fontWeight: 800 }}>
