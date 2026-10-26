@@ -30,8 +30,20 @@ const checkIsAdminPath = () => {
 
 const MainApp = () => {
   const [activeTab, setActiveTab] = useState('bible');
+  const [selectedDevotionalDayId, setSelectedDevotionalDayId] = useState(null);
+  const [selectedBibleTarget, setSelectedBibleTarget] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAdminPath, setIsAdminPath] = useState(checkIsAdminPath);
+
+  const handleOpenDevotional = (dayId) => {
+    setSelectedDevotionalDayId(dayId);
+    setActiveTab('devotionals');
+  };
+
+  const handleOpenBible = (bookId, chapter) => {
+    setSelectedBibleTarget({ bookId, chapter });
+    setActiveTab('bible');
+  };
 
   const { 
     isAuthenticated, 
@@ -173,8 +185,18 @@ const MainApp = () => {
 
       {/* Main Dynamic View Content */}
       <main className="main-content">
-        {activeTab === 'bible' && <BibleView />}
-        {activeTab === 'devotionals' && <DevotionalsView />}
+        {activeTab === 'bible' && (
+          <BibleView 
+            onOpenDevotional={handleOpenDevotional} 
+            initialTarget={selectedBibleTarget} 
+          />
+        )}
+        {activeTab === 'devotionals' && (
+          <DevotionalsView 
+            initialSelectedDayId={selectedDevotionalDayId} 
+            onOpenBible={handleOpenBible} 
+          />
+        )}
         {activeTab === 'news' && <NewsView />}
         {activeTab === 'parenting' && <ParentingView />}
         {activeTab === 'flashcards' && <FlashcardsView />}

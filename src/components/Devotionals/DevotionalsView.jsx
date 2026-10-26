@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Sparkles, 
@@ -11,6 +11,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { DEVOTIONALS_DATA } from '../../data/devotionalsData';
+import { DEVOTIONAL_THEMES } from '../../data/bibleData';
 import { InteractiveVerse } from './InteractiveVerse';
 import { WordDetailModal } from './WordDetailModal';
 import { CouplePrayerSection } from './CouplePrayerSection';
@@ -18,17 +19,26 @@ import { DevotionalQuiz } from './DevotionalQuiz';
 import { speechService } from '../../services/speechService';
 import { useUser } from '../../context/UserContext';
 
-export const DevotionalsView = () => {
+export const DevotionalsView = ({ initialSelectedDayId, onOpenBible }) => {
   const { currentProfileData, completeDevotional, currentProfileName } = useUser();
   const [selectedTrack, setSelectedTrack] = useState('all'); // 'all', 'marriage', 'parenting'
-  const [selectedDayId, setSelectedDayId] = useState(DEVOTIONALS_DATA[0]?.id || 'phil-4-6-7');
+  const [selectedTheme, setSelectedTheme] = useState('all');
+  const [selectedDayId, setSelectedDayId] = useState(initialSelectedDayId || DEVOTIONALS_DATA[0]?.id || 'phil-4-6-7');
   const [selectedWord, setSelectedWord] = useState(null);
   const [isReadingDevotional, setIsReadingDevotional] = useState(false);
   const [showDevotionalPt, setShowDevotionalPt] = useState(true);
 
+  // Sync with initialSelectedDayId if changed from Bible link
+  useEffect(() => {
+    if (initialSelectedDayId) {
+      setSelectedDayId(initialSelectedDayId);
+    }
+  }, [initialSelectedDayId]);
+
   const filteredDevotionals = DEVOTIONALS_DATA.filter(item => {
-    if (selectedTrack === 'all') return true;
-    return item.track === selectedTrack;
+    if (selectedTrack !== 'all' && item.track !== selectedTrack) return false;
+    if (selectedTheme !== 'all' && item.themeId !== selectedTheme) return false;
+    return true;
   });
 
   const activeDevotional = DEVOTIONALS_DATA.find(d => d.id === selectedDayId) || filteredDevotionals[0] || DEVOTIONALS_DATA[0];
@@ -94,6 +104,48 @@ export const DevotionalsView = () => {
         <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)' }}>
           Toque em qualquer palavra em destaque para ouvir a pronúncia em inglês nativo, ver o significado e salvar em seus flashcards.
         </p>
+      </div>
+
+      {/* Thematic Filter Chips (Moved from Bible to Devocionais as requested) */}
+      <div style={{
+        display: 'flex',
+        gap: '0.45rem',
+        overflowX: 'auto',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        WebkitOverflowScrolling: 'touch',
+        paddingBottom: '0.5rem',
+        marginBottom: '0.85rem',
+        scrollbarWidth: 'none'
+      }}>
+        {DEVOTIONAL_THEMES.map((theme) => {
+          const isActive = selectedTheme === theme.id;
+          return (
+            <button
+              key={theme.id}
+              onClick={() => setSelectedTheme(theme.id)}
+              style={{
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.4rem 0.8rem',
+                borderRadius: 'var(--border-radius-full)',
+                border: isActive ? '1px solid var(--color-gold)' : '1px solid var(--border-color)',
+                background: isActive ? 'var(--color-gold)' : 'var(--bg-surface)',
+                color: isActive ? '#ffffff' : 'var(--color-text-main)',
+                fontWeight: isActive ? 700 : 500,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+            >
+              <span>{theme.icon}</span>
+              <span>{theme.label}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Interleaving Track Filters */}
@@ -208,7 +260,18 @@ export const DevotionalsView = () => {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {onOpenBible && (
+              <button
+                onClick={() => onOpenBible(activeDevotional.bookId || 'genesis', activeDevotional.chapter || 1)}
+                className="btn btn-outline"
+                style={{ fontSize: '0.84rem', padding: '0.45rem 0.85rem' }}
+                title="Ler passagem no contexto da Bíblia Sagrada"
+              >
+                <BookOpen size={14} color="var(--color-gold)" />
+                Ler na Bíblia →
+              </button>
+            )}
             {isCompleted ? (
               <span className="badge badge-emerald" style={{ padding: '0.45rem 0.9rem', fontSize: '0.85rem' }}>
                 <CheckCircle size={15} /> Concluído por {currentProfileName}
