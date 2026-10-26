@@ -31,6 +31,8 @@ export const BibleView = ({ onOpenDevotional, initialTarget }) => {
   const [selectedWord, setSelectedWord] = useState(null);
   const [aiChapterContent, setAiChapterContent] = useState(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [isReadingAiChapter, setIsReadingAiChapter] = useState(false);
+  const [copiedAiChapter, setCopiedAiChapter] = useState(false);
 
   const booksScrollRef = useRef(null);
   const chaptersScrollRef = useRef(null);
@@ -741,14 +743,59 @@ export const BibleView = ({ onOpenDevotional, initialTarget }) => {
               marginTop: '1.75rem', 
               textAlign: 'left', 
               background: 'var(--bg-app)', 
-              padding: '1.25rem', 
-              borderRadius: 'var(--border-radius-md)', 
+              padding: '1.4rem 1.5rem', 
+              borderRadius: 'var(--border-radius-lg)', 
               border: '1px solid var(--border-color)',
-              lineHeight: '1.7',
-              whiteSpace: 'pre-wrap',
-              fontSize: '0.94rem'
+              borderLeft: '4px solid var(--color-gold)',
+              lineHeight: '1.75',
+              fontSize: '0.96rem',
+              boxShadow: 'var(--shadow-sm)'
             }}>
-              {aiChapterContent}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px dashed var(--border-color)', paddingBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <span className="badge badge-gold" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <Bot size={14} />
+                  Estudo de {activeBook.name} {selectedChapter} • Grace IA
+                </span>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <button
+                    onClick={() => {
+                      if (isReadingAiChapter) {
+                        speechService.stop();
+                        setIsReadingAiChapter(false);
+                      } else {
+                        speechService.stop();
+                        setIsReadingAiChapter(true);
+                        speechService.speak(aiChapterContent, {
+                          lang: 'pt-BR',
+                          rate: 0.95,
+                          onEnd: () => setIsReadingAiChapter(false),
+                          onError: () => setIsReadingAiChapter(false)
+                        });
+                      }
+                    }}
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.78rem', padding: '0.35rem 0.7rem' }}
+                  >
+                    <Volume2 size={13} className={isReadingAiChapter ? 'speaking-pulse' : ''} />
+                    {isReadingAiChapter ? 'Parar Leitura' : 'Ouvir Explicação'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(aiChapterContent);
+                      setCopiedAiChapter(true);
+                      setTimeout(() => setCopiedAiChapter(false), 2000);
+                    }}
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.78rem', padding: '0.35rem 0.7rem' }}
+                  >
+                    {copiedAiChapter ? <Check size={13} color="var(--color-emerald)" /> : <Copy size={13} />}
+                    {copiedAiChapter ? 'Copiado!' : 'Copiar'}
+                  </button>
+                </div>
+              </div>
+              <div style={{ whiteSpace: 'pre-wrap', color: 'var(--color-text-main)' }}>
+                {aiChapterContent}
+              </div>
             </div>
           )}
         </div>

@@ -55,7 +55,6 @@ export async function askAITutor({ message, history = [], apiKey = '' }) {
     const models = [
       'gemini-3.6-flash',
       'gemini-3.5-flash',
-      'gemini-3.5-flash-lite',
       'gemini-3.8-flash',
       'gemini-flash-latest'
     ];
@@ -75,7 +74,10 @@ export async function askAITutor({ message, history = [], apiKey = '' }) {
               },
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 800
+                maxOutputTokens: 3000,
+                thinkingConfig: {
+                  thinkingBudget: 0
+                }
               }
             })
           }
@@ -83,8 +85,42 @@ export async function askAITutor({ message, history = [], apiKey = '' }) {
 
         if (response.ok) {
           const data = await response.json();
-          replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (replyText) break;
+          const parts = data?.candidates?.[0]?.content?.parts || [];
+          const textParts = parts.filter(p => !p.thought).map(p => p.text).filter(Boolean);
+          const fullText = textParts.join('\n\n') || parts[0]?.text;
+          if (fullText && fullText.trim()) {
+            replyText = fullText.trim();
+            break;
+          }
+        } else {
+          // If 400 (e.g. model does not support thinkingConfig), try without thinkingConfig
+          const fallbackRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents,
+                systemInstruction: {
+                  parts: [{ text: SYSTEM_PROMPT }]
+                },
+                generationConfig: {
+                  temperature: 0.7,
+                  maxOutputTokens: 2500
+                }
+              })
+            }
+          );
+          if (fallbackRes.ok) {
+            const fbData = await fallbackRes.json();
+            const fbParts = fbData?.candidates?.[0]?.content?.parts || [];
+            const fbTextParts = fbParts.filter(p => !p.thought).map(p => p.text).filter(Boolean);
+            const fbFullText = fbTextParts.join('\n\n') || fbParts[0]?.text;
+            if (fbFullText && fbFullText.trim()) {
+              replyText = fbFullText.trim();
+              break;
+            }
+          }
         }
       } catch (e) {
         console.warn(`Attempt with ${model} failed, trying next...`, e);
