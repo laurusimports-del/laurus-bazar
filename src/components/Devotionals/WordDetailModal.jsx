@@ -5,7 +5,7 @@ import { useUser } from '../../context/UserContext';
 
 export const WordDetailModal = ({ wordData, isOpen, onClose }) => {
   const { addFlashcard, currentProfileData } = useUser();
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [playingKey, setPlayingKey] = useState(null);
   const [justAdded, setJustAdded] = useState(false);
 
   if (!isOpen || !wordData) return null;
@@ -14,18 +14,47 @@ export const WordDetailModal = ({ wordData, isOpen, onClose }) => {
     c => c.word.toLowerCase() === wordData.word.toLowerCase()
   );
 
-  const handleSpeak = (speed = 0.85) => {
-    setIsPlaying(true);
+  const handleSpeakEn = (speed = 0.85) => {
+    setPlayingKey('en-word');
     speechService.speak(wordData.word, {
+      lang: 'en-US',
       rate: speed,
-      onEnd: () => setIsPlaying(false),
-      onError: () => setIsPlaying(false)
+      onEnd: () => setPlayingKey(null),
+      onError: () => setPlayingKey(null)
     });
   };
 
-  const handleSpeakExample = () => {
+  const handleSpeakPt = () => {
+    setPlayingKey('pt-meaning');
+    speechService.speak(wordData.meaningPt, {
+      lang: 'pt-BR',
+      rate: 0.95,
+      onEnd: () => setPlayingKey(null),
+      onError: () => setPlayingKey(null)
+    });
+  };
+
+  const handleSpeakExampleEn = () => {
     if (wordData.exampleEn) {
-      speechService.speak(wordData.exampleEn, { rate: 0.85 });
+      setPlayingKey('en-example');
+      speechService.speak(wordData.exampleEn, { 
+        lang: 'en-US', 
+        rate: 0.85,
+        onEnd: () => setPlayingKey(null),
+        onError: () => setPlayingKey(null)
+      });
+    }
+  };
+
+  const handleSpeakExamplePt = () => {
+    if (wordData.examplePt) {
+      setPlayingKey('pt-example');
+      speechService.speak(wordData.examplePt, { 
+        lang: 'pt-BR', 
+        rate: 0.95,
+        onEnd: () => setPlayingKey(null),
+        onError: () => setPlayingKey(null)
+      });
     }
   };
 
@@ -75,23 +104,31 @@ export const WordDetailModal = ({ wordData, isOpen, onClose }) => {
           </button>
         </div>
 
-        {/* Audio buttons */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+        {/* Audio buttons (English Word) */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
           <button 
-            className="btn btn-outline" 
-            onClick={() => handleSpeak(0.85)}
+            className="btn btn-primary" 
+            onClick={() => handleSpeakEn(0.85)}
             style={{ fontSize: '0.85rem', padding: '0.45rem 0.9rem' }}
           >
-            <Volume2 size={16} className={isPlaying ? 'speaking-pulse' : ''} />
-            Pronunciar
+            <Volume2 size={16} className={playingKey === 'en-word' ? 'speaking-pulse' : ''} />
+            🇺🇸 Ouvir em Inglês
           </button>
           <button 
             className="btn btn-outline" 
-            onClick={() => handleSpeak(0.65)}
-            style={{ fontSize: '0.85rem', padding: '0.45rem 0.9rem' }}
+            onClick={() => handleSpeakEn(0.65)}
+            style={{ fontSize: '0.85rem', padding: '0.45rem 0.85rem' }}
           >
             <Sparkles size={14} />
             Mais Lento (0.65x)
+          </button>
+          <button 
+            className="btn btn-outline" 
+            onClick={handleSpeakPt}
+            style={{ fontSize: '0.85rem', padding: '0.45rem 0.9rem', borderColor: 'var(--color-gold)' }}
+          >
+            <Volume2 size={16} color="var(--color-gold)" className={playingKey === 'pt-meaning' ? 'speaking-pulse' : ''} />
+            🇧🇷 Ouvir Tradução (PT)
           </button>
         </div>
 
@@ -103,10 +140,18 @@ export const WordDetailModal = ({ wordData, isOpen, onClose }) => {
           borderLeft: '4px solid var(--color-gold)',
           marginBottom: '1.25rem'
         }}>
-          <div style={{ fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 700, color: 'var(--color-gold)', marginBottom: '0.25rem' }}>
-            Tradução e Significado
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+            <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', fontWeight: 700, color: 'var(--color-gold)' }}>
+              Tradução e Significado
+            </span>
+            <button 
+              onClick={handleSpeakPt}
+              style={{ fontSize: '0.75rem', color: 'var(--color-gold)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}
+            >
+              <Volume2 size={13} /> Ouvir em Português
+            </button>
           </div>
-          <div style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--color-text-main)', marginBottom: '0.4rem' }}>
+          <div style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '0.4rem' }}>
             {wordData.meaningPt}
           </div>
           {wordData.contextNote && (
@@ -123,12 +168,6 @@ export const WordDetailModal = ({ wordData, isOpen, onClose }) => {
               <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-text-muted)' }}>
                 EXEMPLO DE USO:
               </span>
-              <button 
-                onClick={handleSpeakExample} 
-                style={{ fontSize: '0.78rem', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: 600 }}
-              >
-                <Volume2 size={14} /> Ouvir Frase
-              </button>
             </div>
             <div style={{ 
               background: 'var(--bg-app)', 
@@ -136,13 +175,32 @@ export const WordDetailModal = ({ wordData, isOpen, onClose }) => {
               borderRadius: 'var(--border-radius-md)', 
               border: '1px solid var(--border-color)' 
             }}>
-              <p style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--color-text-main)', marginBottom: '0.25rem' }}>
-                “{wordData.exampleEn}”
-              </p>
-              {wordData.examplePt && (
-                <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                  “{wordData.examplePt}”
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                <p style={{ fontWeight: 600, fontSize: '0.96rem', color: 'var(--color-text-main)' }}>
+                  “{wordData.exampleEn}”
                 </p>
+                <button 
+                  onClick={handleSpeakExampleEn} 
+                  style={{ color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, marginLeft: '0.5rem', cursor: 'pointer' }}
+                  title="Ouvir frase em inglês"
+                >
+                  <Volume2 size={14} className={playingKey === 'en-example' ? 'speaking-pulse' : ''} /> 🇺🇸 EN
+                </button>
+              </div>
+
+              {wordData.examplePt && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed var(--border-color)', paddingTop: '0.4rem', marginTop: '0.4rem' }}>
+                  <p style={{ fontSize: '0.86rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                    “{wordData.examplePt}”
+                  </p>
+                  <button 
+                    onClick={handleSpeakExamplePt} 
+                    style={{ color: 'var(--color-gold)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0, marginLeft: '0.5rem', cursor: 'pointer' }}
+                    title="Ouvir tradução em português"
+                  >
+                    <Volume2 size={14} className={playingKey === 'pt-example' ? 'speaking-pulse' : ''} /> 🇧🇷 PT
+                  </button>
+                </div>
               )}
             </div>
           </div>

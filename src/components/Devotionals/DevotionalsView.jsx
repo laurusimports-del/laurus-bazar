@@ -28,17 +28,39 @@ export const DevotionalsView = () => {
   const activeDevotional = DEVOTIONALS_DATA.find(d => d.id === selectedDayId) || DEVOTIONALS_DATA[0];
   const isCompleted = currentProfileData?.completedDevotionals?.includes(activeDevotional.id);
 
+  const [isReadingPt, setIsReadingPt] = useState(false);
+
   const handleReadDevotional = () => {
     if (isReadingDevotional) {
       speechService.stop();
       setIsReadingDevotional(false);
       return;
     }
+    speechService.stop();
+    setIsReadingPt(false);
     setIsReadingDevotional(true);
     speechService.speak(activeDevotional.devotionalEn, {
+      lang: 'en-US',
       rate: 0.85,
       onEnd: () => setIsReadingDevotional(false),
       onError: () => setIsReadingDevotional(false)
+    });
+  };
+
+  const handleReadDevotionalPt = () => {
+    if (isReadingPt) {
+      speechService.stop();
+      setIsReadingPt(false);
+      return;
+    }
+    speechService.stop();
+    setIsReadingDevotional(false);
+    setIsReadingPt(true);
+    speechService.speak(activeDevotional.devotionalPt, {
+      lang: 'pt-BR',
+      rate: 0.95,
+      onEnd: () => setIsReadingPt(false),
+      onError: () => setIsReadingPt(false)
     });
   };
 
@@ -197,14 +219,22 @@ export const DevotionalsView = () => {
             </h3>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button 
               onClick={handleReadDevotional}
               className="btn btn-outline"
               style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem' }}
             >
               <Volume2 size={15} className={isReadingDevotional ? 'speaking-pulse' : ''} />
-              {isReadingDevotional ? 'Parar Leitura' : 'Ouvir em Inglês'}
+              {isReadingDevotional ? 'Parar Leitura EN' : '🇺🇸 Ouvir em Inglês'}
+            </button>
+            <button 
+              onClick={handleReadDevotionalPt}
+              className="btn btn-outline"
+              style={{ fontSize: '0.82rem', padding: '0.4rem 0.85rem', borderColor: 'var(--color-gold)' }}
+            >
+              <Volume2 size={15} color="var(--color-gold)" className={isReadingPt ? 'speaking-pulse' : ''} />
+              {isReadingPt ? 'Parar Leitura PT' : '🇧🇷 Ouvir em Português'}
             </button>
             <button 
               onClick={() => setShowDevotionalPt(!showDevotionalPt)}

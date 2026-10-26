@@ -1,24 +1,31 @@
 import React, { useState } from 'react';
 import { UserProvider, useUser } from './context/UserContext';
 import { Navbar } from './components/Navbar/Navbar';
+import { AuthScreen } from './components/Auth/AuthScreen';
 import { DevotionalsView } from './components/Devotionals/DevotionalsView';
 import { FlashcardsView } from './components/Flashcards/FlashcardsView';
+import { ProgressView } from './components/Progress/ProgressView';
 import { WorshipView } from './components/Worship/WorshipView';
 import { AITutorView } from './components/AITutor/AITutorView';
 import { CoupleDashboard } from './components/CoupleHub/CoupleDashboard';
 import { SettingsModal } from './components/Settings/SettingsModal';
-import { Heart, BookOpen, Sparkles } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import './styles/theme.css';
 import './styles/app.css';
 
 const MainApp = () => {
   const [activeTab, setActiveTab] = useState('devotionals');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const { currentProfileName, spouseProfileName } = useUser();
+  const { isAuthenticated, currentProfileName, spouseProfileName } = useUser();
+
+  // If user is logged out, show the couple authentication & profile selection screen
+  if (!isAuthenticated) {
+    return <AuthScreen />;
+  }
 
   return (
     <div className="app-container">
-      {/* Sticky Header with Navigation & Profile Switcher */}
+      {/* Sticky Header with Navigation & Mobile Bottom Bar */}
       <Navbar 
         activeTab={activeTab} 
         onSelectTab={setActiveTab}
@@ -29,12 +36,13 @@ const MainApp = () => {
       <main className="main-content">
         {activeTab === 'devotionals' && <DevotionalsView />}
         {activeTab === 'flashcards' && <FlashcardsView />}
+        {activeTab === 'progress' && <ProgressView />}
         {activeTab === 'worship' && <WorshipView />}
         {activeTab === 'ai-tutor' && <AITutorView onOpenSettings={() => setIsSettingsOpen(true)} />}
         {activeTab === 'couple-hub' && <CoupleDashboard />}
       </main>
 
-      {/* Footer */}
+      {/* Footer (Subtle on mobile, desktop friendly) */}
       <footer style={{
         borderTop: '1px solid var(--border-color)',
         background: 'var(--bg-surface)',

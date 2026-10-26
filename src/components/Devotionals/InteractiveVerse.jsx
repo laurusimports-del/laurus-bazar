@@ -9,22 +9,39 @@ export const InteractiveVerse = ({
   keywords = [], 
   onSelectWord 
 }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [playingLang, setPlayingLang] = useState(null); // 'en' | 'pt' | null
   const [showPt, setShowPt] = useState(true);
   const [slowRate, setSlowRate] = useState(false);
 
-  const handleSpeakVerse = () => {
-    if (isPlaying) {
+  const handleSpeakEn = () => {
+    if (playingLang === 'en') {
       speechService.stop();
-      setIsPlaying(false);
+      setPlayingLang(null);
       return;
     }
 
-    setIsPlaying(true);
+    setPlayingLang('en');
     speechService.speak(verseEn, {
+      lang: 'en-US',
       rate: slowRate ? 0.7 : 0.85,
-      onEnd: () => setIsPlaying(false),
-      onError: () => setIsPlaying(false)
+      onEnd: () => setPlayingLang(null),
+      onError: () => setPlayingLang(null)
+    });
+  };
+
+  const handleSpeakPt = () => {
+    if (playingLang === 'pt') {
+      speechService.stop();
+      setPlayingLang(null);
+      return;
+    }
+
+    setPlayingLang('pt');
+    speechService.speak(versePt, {
+      lang: 'pt-BR',
+      rate: 0.95,
+      onEnd: () => setPlayingLang(null),
+      onError: () => setPlayingLang(null)
     });
   };
 
@@ -32,7 +49,6 @@ export const InteractiveVerse = ({
   const renderInteractiveEnglishText = () => {
     if (!keywords || keywords.length === 0) return verseEn;
 
-    // Build regex pattern matching all keyword words
     // Sort by length desc so longer phrases match first
     const sortedKeywords = [...keywords].sort((a, b) => b.word.length - a.word.length);
     const regexPattern = new RegExp(`\\b(${sortedKeywords.map(k => escapeRegExp(k.word)).join('|')})\\b`, 'gi');
@@ -42,7 +58,6 @@ export const InteractiveVerse = ({
     let match;
 
     while ((match = regexPattern.exec(verseEn)) !== null) {
-      // Text before match
       if (match.index > lastIndex) {
         parts.push(verseEn.substring(lastIndex, match.index));
       }
@@ -100,7 +115,7 @@ export const InteractiveVerse = ({
         </div>
 
         {/* Audio & Display controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button
             onClick={() => setSlowRate(!slowRate)}
             className={`btn btn-outline ${slowRate ? 'badge-gold' : ''}`}
@@ -112,17 +127,33 @@ export const InteractiveVerse = ({
           </button>
 
           <button
-            onClick={handleSpeakVerse}
-            className={`btn ${isPlaying ? 'btn-gold' : 'btn-primary'}`}
-            style={{ padding: '0.45rem 1rem', fontSize: '0.84rem' }}
+            onClick={handleSpeakEn}
+            className={`btn ${playingLang === 'en' ? 'btn-gold' : 'btn-primary'}`}
+            style={{ padding: '0.45rem 0.95rem', fontSize: '0.84rem' }}
           >
-            {isPlaying ? (
+            {playingLang === 'en' ? (
               <>
-                <Square size={14} /> Parar Áudio
+                <Square size={14} /> Parar EN
               </>
             ) : (
               <>
-                <Volume2 size={16} /> Ouvir Versículo
+                <Volume2 size={16} /> 🇺🇸 Ouvir em Inglês
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleSpeakPt}
+            className={`btn ${playingLang === 'pt' ? 'btn-gold' : 'btn-outline'}`}
+            style={{ padding: '0.45rem 0.95rem', fontSize: '0.84rem' }}
+          >
+            {playingLang === 'pt' ? (
+              <>
+                <Square size={14} /> Parar PT
+              </>
+            ) : (
+              <>
+                <Volume2 size={16} /> 🇧🇷 Ouvir em Português
               </>
             )}
           </button>
@@ -130,7 +161,7 @@ export const InteractiveVerse = ({
           <button
             onClick={() => setShowPt(!showPt)}
             className="btn btn-outline"
-            style={{ padding: '0.45rem 0.8rem', fontSize: '0.82rem' }}
+            style={{ padding: '0.45rem 0.75rem', fontSize: '0.82rem' }}
             title={showPt ? "Ocultar tradução para desafio" : "Mostrar tradução em português"}
           >
             {showPt ? <EyeOff size={15} /> : <Eye size={15} />}
@@ -164,8 +195,17 @@ export const InteractiveVerse = ({
           borderLeft: '4px solid var(--color-gold)',
           animation: 'fadeIn 0.2s ease-out'
         }}>
-          <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-gold)', marginBottom: '0.25rem' }}>
-            Tradução em Português (NVI):
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+            <span style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-gold)' }}>
+              Tradução em Português (NVI):
+            </span>
+            <button
+              onClick={handleSpeakPt}
+              style={{ fontSize: '0.78rem', color: 'var(--color-gold)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+            >
+              <Volume2 size={14} className={playingLang === 'pt' ? 'speaking-pulse' : ''} />
+              {playingLang === 'pt' ? 'Parar Áudio' : 'Ouvir Versículo em Português'}
+            </button>
           </div>
           <p style={{
             fontSize: '1.02rem',

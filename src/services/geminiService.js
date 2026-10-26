@@ -33,36 +33,44 @@ export async function askAITutor({ message, history = [], apiKey = '' }) {
       }
     ];
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          systemInstruction: {
-            parts: [{ text: SYSTEM_PROMPT }]
-          },
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 600
-          }
-        })
-      }
-    );
+    // Model candidate endpoints
+    const models = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+    let replyText = null;
 
-    if (!response.ok) {
-      const err = await response.json();
-      console.warn('Gemini API error, falling back:', err);
-      return generateOfflineResponse(message, true);
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${activeKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents,
+              systemInstruction: {
+                parts: [{ text: SYSTEM_PROMPT }]
+              },
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 700
+              }
+            })
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (replyText) break;
+        }
+      } catch (e) {
+        console.warn(`Attempt with ${model} failed, trying next...`, e);
+      }
     }
 
-    const data = await response.json();
-    const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     if (replyText) {
       return replyText;
     }
-    return generateOfflineResponse(message);
+    return generateOfflineResponse(message, true);
   } catch (err) {
     console.error('Error contacting Gemini API:', err);
     return generateOfflineResponse(message);

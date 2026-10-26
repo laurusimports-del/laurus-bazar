@@ -44,13 +44,22 @@ export const SettingsModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const handleTestSpeech = () => {
+  const handleTestSpeechEn = () => {
     speechService.setRate(speechRate);
     if (selectedVoiceURI) {
-      speechService.setVoice(selectedVoiceURI);
+      speechService.setEnVoice(selectedVoiceURI);
     }
     speechService.speak('The steadfast love of the Lord never ceases. May God bless your home!', {
+      lang: 'en-US',
       rate: speechRate
+    });
+  };
+
+  const handleTestSpeechPt = () => {
+    speechService.setRate(speechRate);
+    speechService.speak('A paz de Deus que excede todo o entendimento guardará vocês!', {
+      lang: 'pt-BR',
+      rate: 0.95
     });
   };
 
@@ -181,18 +190,28 @@ export const SettingsModal = ({ isOpen, onClose }) => {
             borderRadius: 'var(--border-radius-md)',
             border: '1px solid var(--border-color)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
               <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
                 Velocidade da Pronúncia: {speechRate}x
               </span>
-              <button 
-                type="button"
-                onClick={handleTestSpeech}
-                className="btn btn-outline"
-                style={{ fontSize: '0.75rem', padding: '0.3rem 0.65rem' }}
-              >
-                <Volume2 size={13} /> Testar Áudio
-              </button>
+              <div style={{ display: 'flex', gap: '0.35rem' }}>
+                <button 
+                  type="button"
+                  onClick={handleTestSpeechEn}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
+                >
+                  <Volume2 size={13} /> 🇺🇸 Testar EN
+                </button>
+                <button 
+                  type="button"
+                  onClick={handleTestSpeechPt}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem', borderColor: 'var(--color-gold)' }}
+                >
+                  <Volume2 size={13} color="var(--color-gold)" /> 🇧🇷 Testar PT
+                </button>
+              </div>
             </div>
 
             <input

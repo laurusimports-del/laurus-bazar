@@ -72,6 +72,7 @@
   font-weight: 600;
   font-size: 0.92rem;
   cursor: pointer;
+  min-height: 40px;
   transition: all var(--transition-fast);
 }
 
@@ -216,6 +217,7 @@ html.dark .streak-pill {
   font-size: 0.9rem;
   color: var(--color-text-muted);
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .nav-tab-btn:hover {
@@ -232,4 +234,110 @@ html.dark .streak-pill {
 html.dark .nav-tab-btn.active {
   background: linear-gradient(135deg, #4338ca 0%, #6366f1 100%);
   color: #ffffff;
+}
+
+/* =========================================================================
+   Mobile-First Responsive Rules (Mobile Bottom Navigation & Touch UX)
+   ========================================================================= */
+
+/* Mobile Bottom Navigation Bar (Hidden on desktop) */
+.mobile-bottom-nav {
+  display: none;
+}
+
+.desktop-nav-tabs {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  /* Hide desktop horizontal tabs on mobile */
+  .desktop-nav-tabs {
+    display: none !important;
+  }
+
+  /* Show mobile native-feeling bottom nav bar */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 68px;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-color);
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+    z-index: 999;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 0.5rem;
+  }
+
+  .mobile-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    height: 100%;
+    color: var(--color-text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s ease;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 4px 0;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--color-gold);
+    font-weight: 800;
+  }
+
+  .mobile-nav-item.active svg {
+    color: var(--color-gold);
+    transform: scale(1.15);
+    transition: transform 0.2s ease;
+  }
+
+  /* Add padding bottom to main content so bottom bar doesn't overlap content */
+  .main-content {
+    padding-top: 1rem;
+    padding-bottom: 88px;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  /* Touch buttons optimization */
+  .btn {
+    min-height: 44px;
+    font-size: 0.88rem;
+  }
+
+  /* Modals slide from bottom on mobile like native bottom sheets */
+  .modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal-content {
+    max-height: 85vh;
+    border-radius: 24px 24px 0 0;
+    padding: 1.5rem 1.25rem 2.5rem;
+  }
+
+  /* Compact headings on phone */
+  h1 {
+    font-size: 1.65rem !important;
+  }
+
+  h2 {
+    font-size: 1.35rem !important;
+  }
+
+  .card {
+    padding: 1.15rem;
+  }
 }

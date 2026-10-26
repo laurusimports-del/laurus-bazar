@@ -43,8 +43,12 @@ export const FlashcardsView = () => {
 
   const activeCard = filteredCards[currentCardIndex] || filteredCards[0];
 
-  const handleSpeak = (text) => {
-    speechService.speak(text, { rate: 0.85 });
+  const handleSpeakEn = (text) => {
+    speechService.speak(text, { lang: 'en-US', rate: 0.85 });
+  };
+
+  const handleSpeakPt = (text) => {
+    speechService.speak(text, { lang: 'pt-BR', rate: 0.95 });
   };
 
   const handleRating = (rating) => {
@@ -109,7 +113,7 @@ export const FlashcardsView = () => {
             Memorização & Flashcards
           </h1>
           <p style={{ fontSize: '0.96rem', color: 'var(--color-text-muted)' }}>
-            Revise palavras bíblicas e frases do casal diariamente para fixar no vocabulário de longo prazo.
+            Revise com áudio nativo em inglês e português para fixar pronúncia e significado.
           </p>
         </div>
 
@@ -195,7 +199,7 @@ export const FlashcardsView = () => {
               border: '2px solid var(--border-color)',
               borderRadius: 'var(--border-radius-xl)',
               minHeight: '340px',
-              padding: '2rem',
+              padding: '1.75rem',
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'space-between',
@@ -211,17 +215,30 @@ export const FlashcardsView = () => {
               <span className="badge badge-indigo">
                 {activeCard.category || 'Geral'}
               </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSpeak(activeCard.word);
-                }}
-                className="btn btn-outline"
-                style={{ padding: '0.35rem 0.65rem', borderRadius: '50%' }}
-                title="Ouvir pronúncia"
-              >
-                <Volume2 size={16} />
-              </button>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSpeakEn(activeCard.word);
+                  }}
+                  className="btn btn-outline"
+                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.78rem' }}
+                  title="Ouvir palavra em inglês"
+                >
+                  <Volume2 size={15} /> 🇺🇸 EN
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSpeakPt(activeCard.meaningPt);
+                  }}
+                  className="btn btn-outline"
+                  style={{ padding: '0.35rem 0.65rem', fontSize: '0.78rem', borderColor: 'var(--color-gold)' }}
+                  title="Ouvir tradução em português"
+                >
+                  <Volume2 size={15} color="var(--color-gold)" /> 🇧🇷 PT
+                </button>
+              </div>
             </div>
 
             {/* Front vs Back Content */}
@@ -242,13 +259,24 @@ export const FlashcardsView = () => {
                   </p>
                 )}
                 <p style={{ fontSize: '0.85rem', color: 'var(--color-text-light)', marginTop: '1.5rem' }}>
-                  (Toque no cartão para virar e ver o significado)
+                  (Toque no cartão para virar e ver a tradução com áudio)
                 </p>
               </div>
             ) : (
-              <div style={{ padding: '1rem 0' }}>
-                <div style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-gold)', marginBottom: '0.25rem' }}>
-                  Significado em Português:
+              <div style={{ padding: '0.75rem 0' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-gold)' }}>
+                    Significado em Português:
+                  </span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSpeakPt(activeCard.meaningPt);
+                    }}
+                    style={{ fontSize: '0.75rem', color: 'var(--color-gold)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem', cursor: 'pointer' }}
+                  >
+                    <Volume2 size={13} /> Ouvir PT
+                  </button>
                 </div>
                 <h3 style={{ fontSize: '1.85rem', fontWeight: 800, color: 'var(--color-text-main)', marginBottom: '1.25rem' }}>
                   {activeCard.meaningPt}
@@ -264,23 +292,36 @@ export const FlashcardsView = () => {
                     position: 'relative'
                   }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-primary)' }}>EXEMPLO:</span>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--color-primary)' }}>EXEMPLO EM INGLÊS:</span>
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleSpeak(activeCard.exampleEn);
+                          handleSpeakEn(activeCard.exampleEn);
                         }}
-                        style={{ color: 'var(--color-primary)' }}
+                        style={{ color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.75rem', fontWeight: 700 }}
                       >
-                        <Volume2 size={13} />
+                        <Volume2 size={13} /> 🇺🇸 EN
                       </button>
                     </div>
                     <div style={{ fontWeight: 600, fontSize: '0.94rem', color: 'var(--color-text-main)', marginBottom: '0.2rem' }}>
                       “{activeCard.exampleEn}”
                     </div>
                     {activeCard.examplePt && (
-                      <div style={{ fontSize: '0.84rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                        “{activeCard.examplePt}”
+                      <div style={{ borderTop: '1px dashed var(--border-color)', paddingTop: '0.4rem', marginTop: '0.4rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.84rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                            “{activeCard.examplePt}”
+                          </span>
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSpeakPt(activeCard.examplePt);
+                            }}
+                            style={{ color: 'var(--color-gold)', display: 'flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.72rem', fontWeight: 700, flexShrink: 0, marginLeft: '0.4rem' }}
+                          >
+                            <Volume2 size={12} /> 🇧🇷 PT
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -291,7 +332,7 @@ export const FlashcardsView = () => {
             {/* Flip hint footer */}
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.4rem', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>
               <RotateCw size={13} />
-              {isFlipped ? 'Clique para ver a frente' : 'Clique para ver o verso'}
+              {isFlipped ? 'Toque para ver a palavra em inglês' : 'Toque para ver a tradução'}
             </div>
           </div>
 
@@ -368,11 +409,11 @@ export const FlashcardsView = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
             <thead>
               <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--color-text-muted)' }}>
-                <th style={{ padding: '0.75rem' }}>Palavra / Expressão</th>
+                <th style={{ padding: '0.75rem' }}>Palavra (EN)</th>
                 <th style={{ padding: '0.75rem' }}>Categoria</th>
-                <th style={{ padding: '0.75rem' }}>Tradução</th>
+                <th style={{ padding: '0.75rem' }}>Tradução (PT)</th>
                 <th style={{ padding: '0.75rem', textAlign: 'center' }}>Nível SRS</th>
-                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Áudio</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Áudio EN / PT</th>
               </tr>
             </thead>
             <tbody>
@@ -400,14 +441,24 @@ export const FlashcardsView = () => {
                     </span>
                   </td>
                   <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                    <button 
-                      onClick={() => handleSpeak(card.word)}
-                      className="btn-ghost" 
-                      title="Ouvir"
-                      style={{ padding: '0.3rem' }}
-                    >
-                      <Volume2 size={16} />
-                    </button>
+                    <div style={{ display: 'inline-flex', gap: '0.3rem' }}>
+                      <button 
+                        onClick={() => handleSpeakEn(card.word)}
+                        className="btn-ghost" 
+                        title="Ouvir em inglês"
+                        style={{ padding: '0.3rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
+                      >
+                        <Volume2 size={15} /> EN
+                      </button>
+                      <button 
+                        onClick={() => handleSpeakPt(card.meaningPt)}
+                        className="btn-ghost" 
+                        title="Ouvir tradução em português"
+                        style={{ padding: '0.3rem', fontSize: '0.75rem', color: 'var(--color-gold)', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
+                      >
+                        <Volume2 size={15} /> PT
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

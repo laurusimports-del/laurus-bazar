@@ -21,6 +21,7 @@ export const WorshipView = () => {
   const [showPtLyrics, setShowPtLyrics] = useState(true);
   const [quizAnswers, setQuizAnswers] = useState({});
   const [playingLyricIdx, setPlayingLyricIdx] = useState(null);
+  const [playingLyricPtIdx, setPlayingLyricPtIdx] = useState(null);
 
   const activeSong = WORSHIP_SONGS_DATA.find(s => s.id === selectedSongId) || WORSHIP_SONGS_DATA[0];
   const isFavorite = currentProfileData?.favoriteSongs?.includes(activeSong.id);
@@ -31,11 +32,31 @@ export const WorshipView = () => {
       setPlayingLyricIdx(null);
       return;
     }
+    speechService.stop();
+    setPlayingLyricPtIdx(null);
     setPlayingLyricIdx(idx);
     speechService.speak(text, {
+      lang: 'en-US',
       rate: 0.8,
       onEnd: () => setPlayingLyricIdx(null),
       onError: () => setPlayingLyricIdx(null)
+    });
+  };
+
+  const handleSpeakLyricsPt = (text, idx) => {
+    if (playingLyricPtIdx === idx) {
+      speechService.stop();
+      setPlayingLyricPtIdx(null);
+      return;
+    }
+    speechService.stop();
+    setPlayingLyricIdx(null);
+    setPlayingLyricPtIdx(idx);
+    speechService.speak(text, {
+      lang: 'pt-BR',
+      rate: 0.95,
+      onEnd: () => setPlayingLyricPtIdx(null),
+      onError: () => setPlayingLyricPtIdx(null)
     });
   };
 
@@ -199,19 +220,32 @@ export const WorshipView = () => {
                 border: '1px solid var(--border-color)'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
                 <span className="badge badge-indigo" style={{ fontSize: '0.75rem' }}>
                   {section.section}
                 </span>
-                <button 
-                  onClick={() => handleSpeakLyrics(section.en, idx)}
-                  className="btn-ghost"
-                  style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-                  title="Ouvir leitura das estrofes em inglês"
-                >
-                  <Volume2 size={15} className={playingLyricIdx === idx ? 'speaking-pulse' : ''} />
-                  {playingLyricIdx === idx ? 'Parar Áudio' : 'Ouvir Pronúncia'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.3rem' }}>
+                  <button 
+                    onClick={() => handleSpeakLyrics(section.en, idx)}
+                    className="btn-ghost"
+                    style={{ fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.5rem' }}
+                    title="Ouvir estrofe em inglês"
+                  >
+                    <Volume2 size={14} className={playingLyricIdx === idx ? 'speaking-pulse' : ''} />
+                    🇺🇸 EN
+                  </button>
+                  {showPtLyrics && (
+                    <button 
+                      onClick={() => handleSpeakLyricsPt(section.pt, idx)}
+                      className="btn-ghost"
+                      style={{ fontSize: '0.78rem', color: 'var(--color-gold)', display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.2rem 0.5rem' }}
+                      title="Ouvir tradução em português"
+                    >
+                      <Volume2 size={14} className={playingLyricPtIdx === idx ? 'speaking-pulse' : ''} />
+                      🇧🇷 PT
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* English Lines */}
@@ -278,13 +312,24 @@ export const WorshipView = () => {
                     <span style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--color-text-main)' }}>
                       {vocab.word}
                     </span>
-                    <button 
-                      onClick={() => speechService.speak(vocab.word, { rate: 0.85 })}
-                      className="btn-ghost"
-                      style={{ padding: '0.2rem' }}
-                    >
-                      <Volume2 size={16} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                      <button 
+                        onClick={() => speechService.speak(vocab.word, { lang: 'en-US', rate: 0.85 })}
+                        className="btn-ghost"
+                        style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem' }}
+                        title="Ouvir em inglês"
+                      >
+                        <Volume2 size={14} /> EN
+                      </button>
+                      <button 
+                        onClick={() => speechService.speak(vocab.meaningPt, { lang: 'pt-BR', rate: 0.95 })}
+                        className="btn-ghost"
+                        style={{ padding: '0.2rem 0.4rem', fontSize: '0.75rem', color: 'var(--color-gold)' }}
+                        title="Ouvir tradução em português"
+                      >
+                        <Volume2 size={14} /> PT
+                      </button>
+                    </div>
                   </div>
                   {vocab.ipa && (
                     <div style={{ fontSize: '0.8rem', color: 'var(--color-gold)', marginBottom: '0.4rem', fontWeight: 500 }}>
