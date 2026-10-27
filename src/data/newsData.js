@@ -3,13 +3,13 @@
 
 export const NEWS_CATEGORIES = [
   { id: 'all', label: 'Todas as Notícias', icon: '🌐', color: '#6366f1' },
+  { id: 'economy', label: 'Economia (Brasil & Exterior)', icon: '📈', color: '#10b981' },
+  { id: 'politics', label: 'Política (Brasil & Exterior)', icon: '🏛️', color: '#6366f1' },
+  { id: 'technology', label: 'TI & Tecnologia Global', icon: '💻', color: '#3b82f6' },
   { id: 'philosophy-culture', label: 'Filosofia & Tradição', icon: '🏛️', color: '#8b5cf6' },
   { id: 'capitalism-liberty', label: 'Capitalismo & Livre Mercado', icon: '💰', color: '#d97706' },
   { id: 'homeschooling-education', label: 'Educação & Homeschooling', icon: '📚', color: '#059669' },
-  { id: 'technology', label: 'Tecnologia', icon: '💻', color: '#3b82f6' },
   { id: 'cybersecurity', label: 'Cibersegurança', icon: '🛡️', color: '#ef4444' },
-  { id: 'politics', label: 'Política & Geopolítica', icon: '🏛️', color: '#6366f1' },
-  { id: 'economy', label: 'Economia Global', icon: '📈', color: '#10b981' },
   { id: 'stocks', label: 'Bolsa de Valores', icon: '📊', color: '#f59e0b' },
   { id: 'personal-development', label: 'Desenvolvimento Pessoal', icon: '🚀', color: '#ec4899' }
 ];
@@ -1193,6 +1193,216 @@ Pais que desejam criar filhos corajosos, tementes a Deus e intelectualmente bril
         ],
         correctIndex: 0,
         explanation: 'As crianças aprendem prioritariamente por imitação: o testemunho visível do amor, oração e integridade dos pais é o alicerce moral mais forte que existe.'
+      }
+    ]
+  },
+  // 12. ECONOMIA: BRASIL & EXTERIOR
+  {
+    id: 'economy-brazil-agribusiness-markets',
+    category: 'economy',
+    categoryLabel: 'Economia (Brasil & Exterior)',
+    categoryIcon: '📈',
+    categoryColor: '#10b981',
+    source: 'Financial Times • Brasil & Americas',
+    readTime: '4 min read',
+    publishedAt: 'Hoje • Brasil & Mercados Globais',
+    headlineEn: "Brazil's Agribusiness Surge, Copom Interest Rate Policy, and the Global Currency Equation",
+    headlinePt: 'O Avanço do Agronegócio Brasileiro, a Taxa Selic do Copom e a Equação Cambial Global',
+    leadSummaryEn: "As Brazil strengthens its status as a premier global agricultural powerhouse, domestic policymakers balance fiscal challenges and interest rate spreads against international commodity demand.",
+    leadSummaryPt: 'À medida que o Brasil consolida seu papel como um dos maiores celeiros do planeta, formuladores de políticas equilibram desafios fiscais e a taxa de juros com a demanda internacional por commodities.',
+    contentEn: `Brazil's economic performance in global commerce illustrates the profound connection between domestic productivity and international capital markets. Supported by cutting-edge agricultural technology, record-setting soybean harvests, and booming livestock exports, the nation continues to generate substantial foreign exchange reserves. Brazilian agribusiness ("o agro") feeds over one billion people worldwide, anchoring the country's trade balance and cementing its indispensable role in global food security.
+
+Simultaneously, the Central Bank of Brazil (Banco Central) and its Monetary Policy Committee (Copom) must navigate volatile macroeconomic forces. Controlling domestic inflation requires managing the benchmark Selic interest rate while monitoring the Federal Reserve's policy in Washington. When foreign interest rates fluctuate, capital flows can swiftly trigger currency devaluations, making imported goods costlier. Brazilian executives and global traders recognize that sustained economic growth demands relentless fiscal discipline, legal certainty, and open trade corridors with both the Americas and emerging Asian economies.`,
+    contentPt: `O desempenho econômico do Brasil no comércio global ilustra a profunda ligação entre a produtividade doméstica e os mercados de capitais internacionais. Respaldado por tecnologia agrícola de ponta, safras recordes de soja e uma forte expansão nas exportações de carnes, o país continua gerando substanciais reservas cambiais. O agronegócio brasileiro abastece mais de um bilhão de pessoas no mundo, ancorando a balança comercial e consolidando um papel indispensável na segurança alimentar do planeta.
+
+Simultaneamente, o Banco Central do Brasil e seu Comitê de Política Monetária (Copom) precisam navegar forças macroeconômicas voláteis. Controlar a inflação doméstica exige calibrar a taxa básica Selic enquanto se acompanha de perto as decisões de juros do Federal Reserve em Washington. Quando as taxas de juros externas oscilam, os fluxos de capital podem rapidamente desvalorizar a moeda nacional, encarecendo produtos importados. Empresários brasileiros e investidores globais reconhecem que o crescimento sustentável requer disciplina fiscal rigorosa, segurança jurídica e corredores de comércio abertos tanto com as Américas quanto com as economias emergentes da Ásia.`,
+    audioText: `Brazil's Agribusiness Surge, Copom Interest Rate Policy, and the Global Currency Equation. Supported by cutting-edge agricultural technology, the nation continues to generate substantial foreign exchange reserves. Controlling domestic inflation requires managing the benchmark Selic rate while monitoring the Federal Reserve.`,
+    keywords: [
+      {
+        word: 'agribusiness',
+        ipa: '/ˈæɡ.rəˌbɪz.nɪs/',
+        pos: 'noun',
+        meaningPt: 'agronegócio, cadeia produtiva e industrial agropecuária',
+        contextNote: 'O principal motor exportador e gerador de superávit cambial do Brasil.',
+        exampleEn: 'Brazilian agribusiness drives rural economic development and infrastructure investment.',
+        examplePt: 'O agronegócio brasileiro impulsiona o desenvolvimento econômico rural e investimentos em infraestrutura.'
+      },
+      {
+        word: 'trade balance',
+        ipa: '/treɪd ˈbæl.əns/',
+        pos: 'noun phrase',
+        meaningPt: 'balança comercial (diferença entre exportações e importações de um país)',
+        contextNote: 'Termo central de comércio internacional.',
+        exampleEn: 'A positive trade balance strengthens national foreign currency reserves.',
+        examplePt: 'Uma balança comercial positiva fortalece as reservas em moeda estrangeira da nação.'
+      },
+      {
+        word: 'benchmark interest rate',
+        ipa: '/ˈbentʃ.mɑːrk ˈɪn.trɪst reɪt/',
+        pos: 'noun phrase',
+        meaningPt: 'taxa básica de juros (como a Selic no Brasil ou os Fed Funds nos EUA)',
+        contextNote: 'A taxa que orienta todo o custo do crédito e combate à inflação na economia.',
+        exampleEn: 'Copom sets the benchmark interest rate to steer inflation toward official targets.',
+        examplePt: 'O Copom define a taxa básica de juros para direcionar a inflação rumo às metas oficiais.'
+      },
+      {
+        word: 'foreign exchange reserves',
+        ipa: '/ˈfɔːr.ən ɪksˈtʃeɪndʒ rɪˈzɝːvz/',
+        pos: 'noun phrase',
+        meaningPt: 'reservas cambiais (moedas estrangeiras guardadas pelo Banco Central)',
+        contextNote: 'O colchão de liquidez que protege o país contra crises financeiras externas.',
+        exampleEn: 'Substantial foreign exchange reserves shield the economy from speculative currency attacks.',
+        examplePt: 'Reservas cambiais substanciais protegem a economia contra ataques especulativos à moeda.'
+      },
+      {
+        word: 'fiscal discipline',
+        ipa: '/ˈfɪs.kəl ˈdɪs.ə.plɪn/',
+        pos: 'noun phrase',
+        meaningPt: 'disciplina fiscal (equilíbrio responsável entre receitas e gastos do governo)',
+        contextNote: 'Condição indispensável para conter a dívida pública e atrair investimentos privados.',
+        exampleEn: 'Long-term prosperity requires unyielding fiscal discipline and low government waste.',
+        examplePt: 'A prosperidade de longo prazo requer disciplina fiscal inegociável e baixo desperdício governamental.'
+      }
+    ],
+    takeaways: [
+      {
+        en: "Brazil's agricultural capacity plays an indispensable role in international food security and export revenues.",
+        pt: 'A capacidade agrícola do Brasil desempenha um papel indispensável na segurança alimentar internacional e nas receitas de exportação.'
+      },
+      {
+        en: 'Domestic interest rates and currency stability are inextricably tied to global monetary policies like the Federal Reserve.',
+        pt: 'As taxas de juros domésticas e a estabilidade da moeda estão intrinsecamente ligadas a políticas monetárias globais como as do Federal Reserve.'
+      }
+    ],
+    quiz: [
+      {
+        question: 'Por que o agronegócio é considerado a espinha dorsal do comércio exterior brasileiro?',
+        questionEn: 'Why is agribusiness considered the backbone of Brazilian foreign trade?',
+        options: [
+          'Porque produz safras recordes que geram superávit na balança comercial e alimentam mais de 1 bilhão de pessoas no mundo',
+          'Porque o Brasil só consome alimentos importados',
+          'Porque a agricultura não utiliza nenhuma tecnologia',
+          'Porque não gera empregos no interior'
+        ],
+        correctIndex: 0,
+        explanation: 'O agronegócio brasileiro é altamente tecnificado, gerando safras históricas de soja, milho e carnes que garantem reservas cambiais e sustentam a balança comercial.'
+      },
+      {
+        question: 'O que o Banco Central do Brasil (Copom) deve monitorar ao definir a taxa Selic?',
+        questionEn: 'What must the Central Bank of Brazil (Copom) monitor when setting the Selic rate?',
+        options: [
+          'A inflação doméstica, as contas públicas e as taxas de juros do Federal Reserve americano',
+          'Apenas o clima da semana seguinte',
+          'Nenhum indicador econômico',
+          'Apenas o resultado do futebol'
+        ],
+        correctIndex: 0,
+        explanation: 'Para preservar o poder de compra do Real e atrair investimentos, o Copom precisa equilibrar a inflação local com o cenário de juros internacionais dos EUA e a responsabilidade fiscal.'
+      }
+    ]
+  },
+  // 13. POLÍTICA: BRASIL & EXTERIOR
+  {
+    id: 'politics-brazil-institutions-diplomacy',
+    category: 'politics',
+    categoryLabel: 'Política (Brasil & Exterior)',
+    categoryIcon: '🏛️',
+    categoryColor: '#6366f1',
+    source: 'The Wall Street Journal • Latin America Dispatch',
+    readTime: '4 min read',
+    publishedAt: 'Hoje • Política & Geopolítica',
+    headlineEn: "Brazil's Institutional Balance: National Congress, Domestic Reforms, and Global Diplomatic Strategy",
+    headlinePt: 'O Equilíbrio Institucional Brasileiro: Congresso Nacional, Reformas Internas e Estratégia Diplomática Global',
+    leadSummaryEn: "The constitutional balance of powers within the Brazilian republic shapes domestic regulatory reform while diplomatic leadership negotiates critical alliances with global powers.",
+    leadSummaryPt: 'O equilíbrio constitucional de poderes na república brasileira molda as reformas regulatórias internas enquanto a liderança diplomática negocia alianças estratégicas com potências mundiais.',
+    contentEn: `In Brasília, political life is defined by the rigorous contest of ideas between the National Congress, the executive branch, and the constitutional judiciary. Lawmakers in the Senate and Chamber of Deputies play a vital role in drafting tax overhauls, administrative simplifications, and business deregulation laws. Preserving the classical doctrine of "checks and balances" remains central to public discourse, as legal scholars and civic leaders emphasize that institutional predictability and freedom of expression are the true bedrock of national stability.
+
+Beyond its borders ("pra fora"), Brazil's foreign policy commands substantial geopolitical weight. As the leading democracy in South America, the country continually calibrates its bilateral relations with traditional partners in the United States and Europe alongside expanding commercial ties across Asia and the Middle East. Seasoned diplomats argue that national sovereignty must guide every treaty: upholding the nation's democratic values, protecting vital trade interests, and asserting constructive leadership on the world stage without compromising national independence.`,
+    contentPt: `Em Brasília, a vida política é definida pela dinâmica e pelo debate intenso de ideias entre o Congresso Nacional, o Poder Executivo e a Suprema Corte. Parlamentares no Senado Federal e na Câmara dos Deputados desempenham um papel decisivo na condução de reformas tributárias, simplificações administrativas e leis de desregulamentação da atividade econômica. Preservar a doutrina clássica de "freios e contrapesos" (checks and balances) permanece no centro do debate público, com juristas e líderes cívicos destacando que a previsibilidade institucional e a liberdade de expressão são os verdadeiros pilares da estabilidade da nação.
+
+Para além das fronteiras ("pra fora"), a política externa brasileira carrega considerável peso geopolítico. Como a maior democracia da América do Sul, o país calibra continuamente suas relações bilaterais com parceiros tradicionais nos Estados Unidos e na Europa, ao mesmo tempo em que expande laços comerciais na Ásia e no Oriente Médio. Diplomatas experientes sustentam que a soberania nacional deve nortear cada tratado: defendendo os valores democráticos da nação, protegendo interesses comerciais estratégicos e exercendo liderança construtiva no cenário internacional sem abrir mão da independência do país.`,
+    audioText: `Brazil's Institutional Balance: National Congress, Domestic Reforms, and Global Diplomatic Strategy. Preserving the classical doctrine of checks and balances remains central to public discourse. Beyond its borders, Brazil's foreign policy commands substantial geopolitical weight.`,
+    keywords: [
+      {
+        word: 'checks and balances',
+        ipa: '/tʃeks ænd ˈbæl.ən.sɪz/',
+        pos: 'noun phrase',
+        meaningPt: 'freios e contrapesos (sistema constitucional em que cada poder fiscaliza e limita o outro)',
+        contextNote: 'Princípio político fundamental estabelecido por Montesquieu para evitar abusos de poder.',
+        exampleEn: 'A healthy republic relies on robust checks and balances between the branches of government.',
+        examplePt: 'Uma república saudável apoia-se em freios e contrapesos robustos entre os poderes de governo.'
+      },
+      {
+        word: 'National Congress',
+        ipa: '/ˈnæʃ.ən.əl ˈkɑːŋ.ɡrəs/',
+        pos: 'noun phrase',
+        meaningPt: 'Congresso Nacional (o poder legislativo composto pela Câmara dos Deputados e Senado)',
+        contextNote: 'Onde as leis e reformas estruturantes do país são votadas.',
+        exampleEn: 'The National Congress debated the new tax reform to simplify state commerce.',
+        examplePt: 'O Congresso Nacional debateu a nova reforma tributária para simplificar o comércio interestadual.'
+      },
+      {
+        word: 'national sovereignty',
+        ipa: '/ˈnæʃ.ən.əl ˈsɑːv.rən.t̬i/',
+        pos: 'noun phrase',
+        meaningPt: 'soberania nacional (o direito e autoridade suprema do povo governar a si próprio)',
+        contextNote: 'Conceito inegociável na condução da diplomacia internacional.',
+        exampleEn: 'Foreign agreements must respect national sovereignty and constitutional boundaries.',
+        examplePt: 'Acordos externos devem respeitar a soberania nacional e os limites constitucionais.'
+      },
+      {
+        word: 'bilateral relations',
+        ipa: '/baɪˈlæt̬.ɚ.əl rɪˈleɪ.ʃənz/',
+        pos: 'noun phrase',
+        meaningPt: 'relações bilaterais (tratados e diálogos diplomáticos diretos entre dois países)',
+        contextNote: 'Usado para acordos comerciais diretos de exportação e cooperação.',
+        exampleEn: 'Strengthening bilateral relations opens new export markets for manufactured goods.',
+        examplePt: 'Fortalecer relações bilaterais abre novos mercados de exportação para bens manufaturados.'
+      },
+      {
+        word: 'deregulation',
+        ipa: '/diːˌreɡ.jəˈleɪ.ʃən/',
+        pos: 'noun',
+        meaningPt: 'desregulamentação (eliminação de regras excessivas que travam a livre iniciativa)',
+        contextNote: 'Prática defendida para atrair capitais e aumentar a eficiência dos negócios.',
+        exampleEn: 'Economic deregulation empowers entrepreneurs to launch new businesses quickly.',
+        examplePt: 'A desregulamentação econômica capacita empreendedores a iniciarem novas empresas com agilidade.'
+      }
+    ],
+    takeaways: [
+      {
+        en: 'The constitutional doctrine of checks and balances protects citizen freedoms and creates investment predictability.',
+        pt: 'A doutrina constitucional de freios e contrapesos protege as liberdades dos cidadãos e cria previsibilidade para investimentos.'
+      },
+      {
+        en: "Brazil's foreign diplomacy must assertively champion national sovereignty and commercial independence.",
+        pt: 'A diplomacia externa do Brasil deve defender de forma assertiva a soberania nacional e a independência comercial.'
+      }
+    ],
+    quiz: [
+      {
+        question: 'Qual é o papel fundamental do princípio de "checks and balances" (freios e contrapesos)?',
+        questionEn: 'What is the fundamental role of the "checks and balances" principle?',
+        options: [
+          'Garantir que nenhum poder se sobreponha aos demais, preservando as liberdades e a estabilidade constitucional',
+          'Eliminar as leis do país',
+          'Permitir que um único governante tome todas as decisões sem controle',
+          'Apenas organizar o orçamento anual'
+        ],
+        correctIndex: 0,
+        explanation: 'Os freios e contrapesos garantem a independência e a harmonia entre o Legislativo, o Executivo e o Judiciário, impedindo tiranias e arbitrariedades.'
+      },
+      {
+        question: 'O que deve nortear a política externa do Brasil no cenário internacional?',
+        questionEn: "What should guide Brazil's foreign policy on the international stage?",
+        options: [
+          'A soberania nacional, a defesa dos interesses do povo brasileiro e a cooperação comercial vantajosa',
+          'A submissão cega a qualquer determinação externa',
+          'O fechamento total das fronteiras comerciais',
+          'A renúncia aos tratados bilaterais'
+        ],
+        correctIndex: 0,
+        explanation: 'A soberania nacional e os interesses estratégicos de prosperidade da população brasileira devem sempre ser a bússola das relações exteriores do país.'
       }
     ]
   }

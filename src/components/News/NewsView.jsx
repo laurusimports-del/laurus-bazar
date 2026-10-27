@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Newspaper, 
   Sparkles, 
@@ -21,7 +21,9 @@ import {
   HelpCircle,
   RefreshCw,
   Zap,
-  BookOpen
+  BookOpen,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { NEWS_ARTICLES, NEWS_CATEGORIES } from '../../data/newsData';
 import { WordDetailModal } from '../Devotionals/WordDetailModal';
@@ -40,10 +42,32 @@ export const NewsView = () => {
   const [selectedWord, setSelectedWord] = useState(null);
   const [savedKeyword, setSavedKeyword] = useState(null);
   
+  // Horizontal scroll refs
+  const categoryScrollRef = useRef(null);
+  const articlesScrollRef = useRef(null);
+
+  const scrollCategories = (direction) => {
+    if (categoryScrollRef.current) {
+      categoryScrollRef.current.scrollBy({
+        left: direction === 'left' ? -220 : 220,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollArticles = (direction) => {
+    if (articlesScrollRef.current) {
+      articlesScrollRef.current.scrollBy({
+        left: direction === 'left' ? -260 : 260,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   // AI Generator state
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiTopicInput, setAiTopicInput] = useState('');
-  const [aiCategoryInput, setAiCategoryInput] = useState('technology');
+  const [aiCategoryInput, setAiCategoryInput] = useState('economy');
   const [showAiModal, setShowAiModal] = useState(false);
 
   // Quiz state
@@ -335,115 +359,231 @@ Você DEVE responder APENAS com um objeto JSON VÁLIDO (sem crases adicionais de
         )}
       </div>
 
-      {/* Category Filter Chips */}
-      <div style={{
-        display: 'flex',
-        gap: '0.45rem',
-        overflowX: 'auto',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-        WebkitOverflowScrolling: 'touch',
-        paddingBottom: '0.65rem',
-        marginBottom: '1.25rem',
-        scrollbarWidth: 'none'
-      }}>
-        {NEWS_CATEGORIES.map((cat) => {
-          const isActive = selectedCategory === cat.id;
-          return (
-            <button
-              key={cat.id}
-              onClick={() => handleSelectCategory(cat.id)}
-              style={{
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                padding: '0.42rem 0.85rem',
-                borderRadius: 'var(--border-radius-full)',
-                border: isActive ? `1.5px solid ${cat.color}` : '1px solid var(--border-color)',
-                background: isActive ? cat.color : 'var(--bg-surface)',
-                color: isActive ? '#ffffff' : 'var(--color-text-main)',
-                fontWeight: isActive ? 700 : 500,
-                fontSize: '0.82rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <span>{cat.icon}</span>
-              <span>{cat.label}</span>
-            </button>
-          );
-        })}
+      {/* Category Filter Chips with Horizontal Scroll Arrows */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <button
+          onClick={() => scrollCategories('left')}
+          aria-label="Rolar categorias para esquerda"
+          style={{
+            position: 'absolute',
+            left: '-6px',
+            zIndex: 3,
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver categorias anteriores"
+        >
+          <ChevronLeft size={18} />
+        </button>
+
+        <div 
+          ref={categoryScrollRef}
+          style={{
+            display: 'flex',
+            gap: '0.45rem',
+            overflowX: 'auto',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            WebkitOverflowScrolling: 'touch',
+            padding: '0.2rem 2.2rem 0.65rem 2.2rem',
+            scrollbarWidth: 'none'
+          }}
+        >
+          {NEWS_CATEGORIES.map((cat) => {
+            const isActive = selectedCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleSelectCategory(cat.id)}
+                style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.42rem 0.85rem',
+                  borderRadius: 'var(--border-radius-full)',
+                  border: isActive ? `1.5px solid ${cat.color}` : '1px solid var(--border-color)',
+                  background: isActive ? cat.color : 'var(--bg-surface)',
+                  color: isActive ? '#ffffff' : 'var(--color-text-main)',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => scrollCategories('right')}
+          aria-label="Rolar categorias para direita"
+          style={{
+            position: 'absolute',
+            right: '-6px',
+            zIndex: 3,
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver mais categorias"
+        >
+          <ChevronRight size={18} />
+        </button>
       </div>
 
-      {/* Articles Carousel Selector */}
-      <div style={{
-        display: 'flex',
-        gap: '0.65rem',
-        overflowX: 'auto',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-        WebkitOverflowScrolling: 'touch',
-        paddingBottom: '0.75rem',
-        marginBottom: '1.5rem',
-        scrollbarWidth: 'thin'
-      }}>
-        {filteredArticles.map((art) => {
-          const isSelected = art.id === activeArticle.id;
-          return (
-            <button
-              key={art.id}
-              onClick={() => {
-                setSelectedArticleId(art.id);
-                speechService.stop();
-                setPlayingLang(null);
-              }}
-              style={{
-                flexShrink: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--border-radius-lg)',
-                border: isSelected 
-                  ? `2px solid ${art.categoryColor || 'var(--color-gold)'}` 
-                  : '1px solid var(--border-color)',
-                background: isSelected 
-                  ? 'var(--bg-surface)' 
-                  : 'var(--bg-card)',
-                boxShadow: isSelected ? 'var(--shadow-md)' : 'none',
-                minWidth: '240px',
-                maxWidth: '280px',
-                textAlign: 'left',
-                position: 'relative',
-                transition: 'all 0.2s',
-                boxSizing: 'border-box'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '0.35rem' }}>
-                <span style={{ 
-                  fontSize: '0.7rem', 
-                  fontWeight: 800, 
-                  textTransform: 'uppercase',
-                  color: art.categoryColor || 'var(--color-primary)'
-                }}>
-                  {art.categoryIcon} {art.categoryLabel}
-                </span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>
-                  {art.readTime}
-                </span>
-              </div>
-              <div style={{ fontWeight: 700, fontSize: '0.86rem', color: 'var(--color-text-main)', marginBottom: '0.25rem', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                {art.headlineEn}
-              </div>
-              <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '240px' }}>
-                {art.source}
-              </div>
-            </button>
-          );
-        })}
+      {/* Articles Carousel Selector with Horizontal Scroll Arrows */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => scrollArticles('left')}
+          aria-label="Rolar artigos para esquerda"
+          style={{
+            position: 'absolute',
+            left: '-6px',
+            zIndex: 3,
+            width: '34px',
+            height: '34px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver artigos anteriores"
+        >
+          <ChevronLeft size={19} />
+        </button>
+
+        <div 
+          ref={articlesScrollRef}
+          style={{
+            display: 'flex',
+            gap: '0.65rem',
+            overflowX: 'auto',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            WebkitOverflowScrolling: 'touch',
+            padding: '0.2rem 2.2rem 0.75rem 2.2rem',
+            scrollbarWidth: 'thin'
+          }}
+        >
+          {filteredArticles.map((art) => {
+            const isSelected = art.id === activeArticle.id;
+            return (
+              <button
+                key={art.id}
+                onClick={() => {
+                  setSelectedArticleId(art.id);
+                  speechService.stop();
+                  setPlayingLang(null);
+                }}
+                style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--border-radius-lg)',
+                  border: isSelected 
+                    ? `2px solid ${art.categoryColor || 'var(--color-gold)'}` 
+                    : '1px solid var(--border-color)',
+                  background: isSelected 
+                    ? 'var(--bg-surface)' 
+                    : 'var(--bg-card)',
+                  boxShadow: isSelected ? 'var(--shadow-md)' : 'none',
+                  minWidth: '240px',
+                  maxWidth: '280px',
+                  textAlign: 'left',
+                  position: 'relative',
+                  transition: 'all 0.2s',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <span style={{ 
+                    fontSize: '0.7rem', 
+                    fontWeight: 800, 
+                    textTransform: 'uppercase',
+                    color: art.categoryColor || 'var(--color-primary)'
+                  }}>
+                    {art.categoryIcon} {art.categoryLabel}
+                  </span>
+                  <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>
+                    {art.readTime}
+                  </span>
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.86rem', color: 'var(--color-text-main)', marginBottom: '0.25rem', lineHeight: 1.35, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                  {art.headlineEn}
+                </div>
+                <div style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '240px' }}>
+                  {art.source}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => scrollArticles('right')}
+          aria-label="Rolar artigos para direita"
+          style={{
+            position: 'absolute',
+            right: '-6px',
+            zIndex: 3,
+            width: '34px',
+            height: '34px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver mais artigos"
+        >
+          <ChevronRight size={19} />
+        </button>
       </div>
 
       {/* Main Active Article Container */}
@@ -815,13 +955,13 @@ Você DEVE responder APENAS com um objeto JSON VÁLIDO (sem crases adicionais de
                     fontSize: '16px'
                   }}
                 >
-                  <option value="technology">💻 Tecnologia & IA</option>
-                  <option value="cybersecurity">🛡️ Cibersegurança & Crimes Digitais</option>
-                  <option value="politics">🏛️ Política & Geopolítica Internacional</option>
+                  <option value="economy">📈 Economia (Brasil & Exterior)</option>
+                  <option value="politics">🏛️ Política (Brasil & Exterior)</option>
+                  <option value="technology">💻 TI & Tecnologia Global</option>
                   <option value="philosophy-culture">🏛️ Filosofia & Tradição (Olavo, Nietzsche, BP)</option>
                   <option value="capitalism-liberty">💰 Capitalismo & Livre Mercado (Mises, Hayek)</option>
                   <option value="homeschooling-education">📚 Educação & Homeschooling (Trivium, Família)</option>
-                  <option value="economy">📈 Economia & Inflação Global</option>
+                  <option value="cybersecurity">🛡️ Cibersegurança & Crimes Digitais</option>
                   <option value="stocks">📊 Bolsa de Valores & Ações de Wall Street</option>
                   <option value="personal-development">🚀 Desenvolvimento Pessoal & Hábitos</option>
                 </select>
@@ -829,12 +969,12 @@ Você DEVE responder APENAS com um objeto JSON VÁLIDO (sem crases adicionais de
 
               <div>
                 <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
-                  Tema Específico ou Autor (Ex: Olavo de Carvalho, Nietzsche, Escola Austríaca, Homeschooling, Nvidia, Fed):
+                  Tema Específico ou Autor (Ex: Agronegócio & Selic, Congresso Nacional, Olavo, Mises, IA Global):
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Primazia da Realidade, Crise do Niilismo, Como Educar Seus Filhos, Livre Mercado..."
+                  placeholder="Ex: Agronegócio e Taxa Selic, Soberania Nacional, Primazia da Realidade, Big Techs..."
                   value={aiTopicInput}
                   onChange={e => setAiTopicInput(e.target.value)}
                   style={{
@@ -857,13 +997,14 @@ Você DEVE responder APENAS com um objeto JSON VÁLIDO (sem crases adicionais de
                 </span>
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                   {[
+                    'Agronegócio Brasileiro & Taxa Selic',
+                    'Congresso Nacional & Diplomacia Exterior',
+                    'IA & Big Techs Globais',
                     'Olavo de Carvalho & Primazia da Realidade',
                     'Nietzsche & Crise do Niilismo',
                     'Capitalismo & Escola Austríaca',
                     'Homeschooling & O Trivium Clássico',
-                    'Como Educar Seus Filhos (Brasil Paralelo)',
-                    'Nvidia & AI Boom',
-                    'Federal Reserve Interest Rates'
+                    'Como Educar Seus Filhos (Brasil Paralelo)'
                   ].map((sug, sIdx) => (
                     <button
                       key={sIdx}

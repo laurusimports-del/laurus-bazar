@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BookOpen, 
   Sparkles, 
@@ -6,6 +6,7 @@ import {
   CheckCircle, 
   Lightbulb, 
   ChevronRight, 
+  ChevronLeft,
   Calendar,
   Layers,
   ArrowRight
@@ -23,6 +24,28 @@ export const DevotionalsView = ({ initialSelectedDayId, onOpenBible }) => {
   const { currentProfileData, completeDevotional, currentProfileName } = useUser();
   const [selectedTrack, setSelectedTrack] = useState('all'); // 'all', 'marriage', 'parenting'
   const [selectedTheme, setSelectedTheme] = useState('all');
+
+  // Horizontal scroll refs
+  const themesScrollRef = useRef(null);
+  const daysScrollRef = useRef(null);
+
+  const scrollThemes = (direction) => {
+    if (themesScrollRef.current) {
+      themesScrollRef.current.scrollBy({
+        left: direction === 'left' ? -200 : 200,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  const scrollDays = (direction) => {
+    if (daysScrollRef.current) {
+      daysScrollRef.current.scrollBy({
+        left: direction === 'left' ? -220 : 220,
+        behavior: 'smooth'
+      });
+    }
+  };
   const [selectedDayId, setSelectedDayId] = useState(initialSelectedDayId || DEVOTIONALS_DATA[0]?.id || 'phil-4-6-7');
   const [selectedWord, setSelectedWord] = useState(null);
   const [isReadingDevotional, setIsReadingDevotional] = useState(false);
@@ -106,46 +129,104 @@ export const DevotionalsView = ({ initialSelectedDayId, onOpenBible }) => {
         </p>
       </div>
 
-      {/* Thematic Filter Chips (Moved from Bible to Devocionais as requested) */}
-      <div style={{
-        display: 'flex',
-        gap: '0.45rem',
-        overflowX: 'auto',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-        WebkitOverflowScrolling: 'touch',
-        paddingBottom: '0.5rem',
-        marginBottom: '0.85rem',
-        scrollbarWidth: 'none'
-      }}>
-        {DEVOTIONAL_THEMES.map((theme) => {
-          const isActive = selectedTheme === theme.id;
-          return (
-            <button
-              key={theme.id}
-              onClick={() => setSelectedTheme(theme.id)}
-              style={{
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.35rem',
-                padding: '0.4rem 0.8rem',
-                borderRadius: 'var(--border-radius-full)',
-                border: isActive ? '1px solid var(--color-gold)' : '1px solid var(--border-color)',
-                background: isActive ? 'var(--color-gold)' : 'var(--bg-surface)',
-                color: isActive ? '#ffffff' : 'var(--color-text-main)',
-                fontWeight: isActive ? 700 : 500,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease'
-              }}
-            >
-              <span>{theme.icon}</span>
-              <span>{theme.label}</span>
-            </button>
-          );
-        })}
+      {/* Thematic Filter Chips with Horizontal Scroll Arrows */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '0.85rem' }}>
+        <button
+          onClick={() => scrollThemes('left')}
+          aria-label="Rolar temas para esquerda"
+          style={{
+            position: 'absolute',
+            left: '-6px',
+            zIndex: 3,
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver temas anteriores"
+        >
+          <ChevronLeft size={16} />
+        </button>
+
+        <div 
+          ref={themesScrollRef}
+          style={{
+            display: 'flex',
+            gap: '0.45rem',
+            overflowX: 'auto',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            WebkitOverflowScrolling: 'touch',
+            padding: '0.2rem 2rem 0.5rem 2rem',
+            scrollbarWidth: 'none'
+          }}
+        >
+          {DEVOTIONAL_THEMES.map((theme) => {
+            const isActive = selectedTheme === theme.id;
+            return (
+              <button
+                key={theme.id}
+                onClick={() => setSelectedTheme(theme.id)}
+                style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  padding: '0.4rem 0.8rem',
+                  borderRadius: 'var(--border-radius-full)',
+                  border: isActive ? '1px solid var(--color-gold)' : '1px solid var(--border-color)',
+                  background: isActive ? 'var(--color-gold)' : 'var(--bg-surface)',
+                  color: isActive ? '#ffffff' : 'var(--color-text-main)',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <span>{theme.icon}</span>
+                <span>{theme.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => scrollThemes('right')}
+          aria-label="Rolar temas para direita"
+          style={{
+            position: 'absolute',
+            right: '-6px',
+            zIndex: 3,
+            width: '30px',
+            height: '30px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver mais temas"
+        >
+          <ChevronRight size={16} />
+        </button>
       </div>
 
       {/* Interleaving Track Filters */}
@@ -173,73 +254,131 @@ export const DevotionalsView = ({ initialSelectedDayId, onOpenBible }) => {
         </button>
       </div>
 
-      {/* Devotionals Carousel / Day Selector */}
-      <div style={{
-        display: 'flex',
-        gap: '0.65rem',
-        overflowX: 'auto',
-        width: '100%',
-        maxWidth: '100%',
-        boxSizing: 'border-box',
-        WebkitOverflowScrolling: 'touch',
-        paddingBottom: '0.75rem',
-        marginBottom: '1.5rem',
-        scrollbarWidth: 'thin'
-      }}>
-        {filteredDevotionals.map((item) => {
-          const isCurrent = item.id === activeDevotional.id;
-          const isDone = completedList.includes(item.id);
+      {/* Devotionals Carousel / Day Selector with Horizontal Scroll Arrows */}
+      <div style={{ position: 'relative', display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
+        <button
+          onClick={() => scrollDays('left')}
+          aria-label="Rolar dias para esquerda"
+          style={{
+            position: 'absolute',
+            left: '-6px',
+            zIndex: 3,
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver dias anteriores"
+        >
+          <ChevronLeft size={18} />
+        </button>
 
-          return (
-            <button
-              key={item.id}
-              onClick={() => {
-                setSelectedDayId(item.id);
-                speechService.stop();
-                setIsReadingDevotional(false);
-              }}
-              style={{
-                flexShrink: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                padding: '0.75rem 1rem',
-                borderRadius: 'var(--border-radius-lg)',
-                border: isCurrent 
-                  ? '2px solid var(--color-gold)' 
-                  : '1px solid var(--border-color)',
-                background: isCurrent 
-                  ? 'var(--bg-surface)' 
-                  : 'var(--bg-card)',
-                boxShadow: isCurrent ? 'var(--shadow-md)' : 'none',
-                minWidth: '190px',
-                textAlign: 'left',
-                position: 'relative',
-                transition: 'all 0.2s'
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '0.35rem' }}>
-                <span style={{ 
-                  fontSize: '0.72rem', 
-                  fontWeight: 800, 
-                  textTransform: 'uppercase',
-                  color: isCurrent ? 'var(--color-gold)' : (item.track === 'parenting' ? 'var(--color-emerald)' : 'var(--color-primary)')
-                }}>
-                  Dia {item.day} • {item.trackLabel || (item.day % 2 === 0 ? 'Família & Filhos' : 'Casamento & Fé')}
-                </span>
-                {isDone && (
-                  <CheckCircle size={14} color="var(--color-emerald)" />
-                )}
-              </div>
-              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-text-main)', marginBottom: '0.2rem' }}>
-                {item.verseRef}
-              </div>
-              <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
-                {item.theme}
-              </div>
-            </button>
-          );
-        })}
+        <div 
+          ref={daysScrollRef}
+          style={{
+            display: 'flex',
+            gap: '0.65rem',
+            overflowX: 'auto',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+            WebkitOverflowScrolling: 'touch',
+            padding: '0.2rem 2.2rem 0.75rem 2.2rem',
+            scrollbarWidth: 'thin'
+          }}
+        >
+          {filteredDevotionals.map((item) => {
+            const isCurrent = item.id === activeDevotional.id;
+            const isDone = completedList.includes(item.id);
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setSelectedDayId(item.id);
+                  speechService.stop();
+                  setIsReadingDevotional(false);
+                }}
+                style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  padding: '0.75rem 1rem',
+                  borderRadius: 'var(--border-radius-lg)',
+                  border: isCurrent 
+                    ? '2px solid var(--color-gold)' 
+                    : '1px solid var(--border-color)',
+                  background: isCurrent 
+                    ? 'var(--bg-surface)' 
+                    : 'var(--bg-card)',
+                  boxShadow: isCurrent ? 'var(--shadow-md)' : 'none',
+                  minWidth: '190px',
+                  textAlign: 'left',
+                  position: 'relative',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center', marginBottom: '0.35rem' }}>
+                  <span style={{ 
+                    fontSize: '0.72rem', 
+                    fontWeight: 800, 
+                    textTransform: 'uppercase',
+                    color: isCurrent ? 'var(--color-gold)' : (item.track === 'parenting' ? 'var(--color-emerald)' : 'var(--color-primary)')
+                  }}>
+                    Dia {item.day} • {item.trackLabel || (item.day % 2 === 0 ? 'Família & Filhos' : 'Casamento & Fé')}
+                  </span>
+                  {isDone && (
+                    <CheckCircle size={14} color="var(--color-emerald)" />
+                  )}
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-text-main)', marginBottom: '0.2rem' }}>
+                  {item.verseRef}
+                </div>
+                <div style={{ fontSize: '0.76rem', color: 'var(--color-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>
+                  {item.title}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => scrollDays('right')}
+          aria-label="Rolar dias para direita"
+          style={{
+            position: 'absolute',
+            right: '-6px',
+            zIndex: 3,
+            width: '32px',
+            height: '32px',
+            borderRadius: '50%',
+            background: 'var(--bg-surface)',
+            border: '1.5px solid var(--border-color)',
+            boxShadow: 'var(--shadow-md)',
+            color: 'var(--color-text-main)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            flexShrink: 0,
+            opacity: 0.95,
+            transition: 'all 0.15s ease'
+          }}
+          title="Ver mais dias"
+        >
+          <ChevronRight size={18} />
+        </button>
       </div>
 
       {/* Main Devotional Title Card */}
