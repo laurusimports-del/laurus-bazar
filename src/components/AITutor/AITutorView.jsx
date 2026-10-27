@@ -13,11 +13,109 @@ import {
   Shield,
   Coffee,
   Compass,
-  Users
+  Users,
+  Lightbulb,
+  Shuffle,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { askAITutor } from '../../services/geminiService';
 import { speechService } from '../../services/speechService';
 import { useUser } from '../../context/UserContext';
+
+// Curated facts on Brazilian politics, powers, economy and finance
+const DID_YOU_KNOW_FACTS = [
+  {
+    id: 'selic-copom',
+    category: 'financas',
+    categoryLabel: 'Finanças & Moeda',
+    categoryIcon: '💰',
+    color: '#10b981',
+    title: 'O que é a Taxa Selic e como o Copom decide os juros?',
+    textPt: 'A Selic é a taxa básica de juros da economia brasileira, fixada a cada 45 dias pelo Copom (Banco Central). Quando a Selic sobe, o crédito encarece e o consumo desacelera para frear a inflação. Quando cai, barateia empréstimos e estimula investimentos. Na visão da Escola Austríaca (Mises e Hayek), os juros refletem a preferência temporal das pessoas e governos não devem manipulá-los artificialmente.',
+    englishTerm: 'Benchmark Interest Rate',
+    ipa: '/ˈbentʃ.mɑːrk ˈɪn.trɪst reɪt/',
+    termMeaning: 'Taxa básica de juros de referência da economia',
+    exampleEn: 'Copom sets the benchmark interest rate to control monetary inflation.',
+    examplePt: 'O Copom define a taxa básica de juros para controlar a inflação monetária.',
+    prompt: 'Grace, me ensine termos financeiros em inglês sobre a Taxa Selic, o Copom e como decisões de juros afetam o orçamento de uma família.'
+  },
+  {
+    id: 'tres-poderes',
+    category: 'poderes',
+    categoryLabel: 'Os Três Poderes',
+    categoryIcon: '⚖️',
+    color: '#6366f1',
+    title: 'Como funciona a divisão dos Três Poderes e os freios e contrapesos no Brasil?',
+    textPt: 'A Constituição divide a República em três poderes independentes e harmônicos: o Legislativo (Câmara e Senado criam leis e fiscalizam gastos), o Executivo (Presidência administra o governo) e o Judiciário (STF e tribunais aplicam a lei). O princípio clássico de Montesquieu de freios e contrapesos (checks and balances) existe para evitar que um poder usurpe as funções do outro ou se torne tirânico.',
+    englishTerm: 'Checks and Balances',
+    ipa: '/tʃeks ænd ˈbæl.ən.sɪz/',
+    termMeaning: 'Sistema constitucional de freios e contrapesos',
+    exampleEn: 'The doctrine of checks and balances prevents tyrannical concentration of power.',
+    examplePt: 'A doutrina de freios e contrapesos impede a concentração tirânica de poder.',
+    prompt: 'Grace, como explicar em inglês o sistema republicano de freios e contrapesos (checks and balances) e a separação dos três poderes?'
+  },
+  {
+    id: 'agro-superavit',
+    category: 'economia',
+    categoryLabel: 'Economia Brasileira',
+    categoryIcon: '📈',
+    color: '#d97706',
+    title: 'Por que o Agronegócio sustenta as contas externas do Brasil?',
+    textPt: 'O agronegócio brasileiro é um dos mais produtivos e tecnológicos do planeta, respondendo por quase 50% de todas as exportações do país. Ao exportar safras históricas de soja, milho e carnes para a Ásia, Europa e Américas, o setor injeta bilhões de dólares no Brasil, gerando superávits na balança comercial e sustentando as reservas internacionais do Banco Central.',
+    englishTerm: 'Trade Surplus',
+    ipa: '/treɪd ˈsɝː.pləs/',
+    termMeaning: 'Superávit na balança comercial (exportações > importações)',
+    exampleEn: 'A strong agricultural trade surplus bolsters foreign currency reserves.',
+    examplePt: 'Um forte superávit comercial no agronegócio fortalece as reservas em moeda estrangeira.'
+    ,prompt: 'Grace, me ensine termos em inglês sobre o agronegócio brasileiro e seu papel estratégico no comércio internacional.'
+  },
+  {
+    id: 'congresso-orcamento',
+    category: 'politica',
+    categoryLabel: 'Política Brasileira',
+    categoryIcon: '🏛️',
+    color: '#8b5cf6',
+    title: 'Quem realmente tem a palavra final sobre o dinheiro público no Brasil?',
+    textPt: 'Embora o Executivo elabore a proposta do orçamento anual (LOA), quem tem a autoridade constitucional de aprovar, modificar, cortar gastos e autorizar impostos é o Congresso Nacional (deputados e senadores). Nenhum imposto novo ou despesa pública pode ser cobrado do povo sem autorização expressa do parlamento.',
+    englishTerm: 'Power of the Purse',
+    ipa: '/ˈpaʊ.ɚ əv ðə pɝːs/',
+    termMeaning: 'Autoridade parlamentar sobre o orçamento e gastos públicos',
+    exampleEn: 'Congress exercises the power of the purse to hold state spending accountable.',
+    examplePt: 'O Congresso exerce a autoridade do orçamento para fiscalizar os gastos estatais.',
+    prompt: 'Grace, como explicar em inglês a aprovação do orçamento público e o papel fiscalizador do Congresso Nacional?'
+  },
+  {
+    id: 'juros-reais-vs-nominais',
+    category: 'financas',
+    categoryLabel: 'Finanças & Poupança',
+    categoryIcon: '💵',
+    color: '#059669',
+    title: 'Juros Nominais vs. Juros Reais: O que realmente protege o patrimônio?',
+    textPt: 'O juro nominal é o percentual bruto prometido pela aplicação (ex: 12% ao ano). O juro real é o ganho que sobra após subtrair a inflação (IPCA). Se a inflação foi de 4%, o juro real é cerca de 8%. A família só constrói patrimônio real se a rentabilidade for superior à perda do poder de compra da moeda.',
+    englishTerm: 'Real Interest Rate',
+    ipa: '/riːl ˈɪn.trɪst reɪt/',
+    termMeaning: 'Taxa de juro real (ganho real acima da inflação)',
+    exampleEn: 'Real interest rates determine the actual growth of family savings.',
+    examplePt: 'As taxas de juros reais determinam o crescimento real das economias familiares.',
+    prompt: 'Grace, me ensine como falar em inglês sobre juros reais e nominais para proteção patrimonial da família.'
+  },
+  {
+    id: 'stf-constituicao',
+    category: 'poderes',
+    categoryLabel: 'Poder Judiciário',
+    categoryIcon: '🏛️',
+    color: '#3b82f6',
+    title: 'Qual é o papel original do STF segundo a Constituição?',
+    textPt: 'Inspirado na Suprema Corte dos Estados Unidos, o STF foi desenhado para ser o guardião da Constituição (Art. 102). Sua função essencial é proteger direitos fundamentais, como a liberdade de expressão e a separação dos poderes, atuando sob o princípio da autocontenção judicial (judicial restraint), sem invadir o papel legislativo do Congresso.',
+    englishTerm: 'Judicial Restraint',
+    ipa: '/dʒuːˈdɪʃ.əl rɪˈstreɪnt/',
+    termMeaning: 'Autocontenção judicial (não invadir funções legislativas)',
+    exampleEn: 'Judicial restraint maintains harmony between constitutional branches.',
+    examplePt: 'A autocontenção judicial mantém a harmonia entre os poderes constitucionais.',
+    prompt: 'Grace, como discutir em inglês a teoria da separação de poderes e a autocontenção judicial?'
+  }
+];
 
 export const AITutorView = ({ onOpenSettings }) => {
   const { settings, currentProfileName } = useUser();
@@ -31,7 +129,19 @@ export const AITutorView = ({ onOpenSettings }) => {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
+  const [factIndex, setFactIndex] = useState(0);
+  const [factFilter, setFactFilter] = useState('all');
+  const [isFactOpen, setIsFactOpen] = useState(true);
   const messagesEndRef = useRef(null);
+
+  const filteredFacts = factFilter === 'all' 
+    ? DID_YOU_KNOW_FACTS 
+    : DID_YOU_KNOW_FACTS.filter(f => f.category === factFilter);
+  const activeFact = filteredFacts[factIndex % filteredFacts.length] || DID_YOU_KNOW_FACTS[0];
+
+  const handleNextFact = () => {
+    setFactIndex(prev => prev + 1);
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -151,14 +261,14 @@ export const AITutorView = ({ onOpenSettings }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
             <span className="badge badge-gold">
               <Bot size={13} />
-              AI Faith & Language Companion
+              Faith & Language Companion • Grace
             </span>
             <span style={{ fontSize: '0.8rem', color: 'var(--color-emerald)', fontWeight: 600 }}>
-              🟢 Grace IA Online (Google Gemini Ativo)
+              🟢 Grace Online (Google Gemini Ativo)
             </span>
           </div>
-          <h1 style={{ fontSize: '1.85rem', fontWeight: 800 }}>
-            Tutor IA: Grace 🕊️
+          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>
+            TUTOR 🕊️
           </h1>
         </div>
 
@@ -192,6 +302,172 @@ export const AITutorView = ({ onOpenSettings }) => {
             {chip.label}
           </button>
         ))}
+      </div>
+
+      {/* VOCÊ SABIA? • Política Brasileira, Poderes, Economia & Finanças */}
+      <div style={{
+        background: 'var(--bg-surface)',
+        border: '1.5px solid var(--border-color)',
+        borderRadius: 'var(--border-radius-lg)',
+        padding: '0.85rem 1rem',
+        marginBottom: '0.85rem',
+        boxShadow: 'var(--shadow-sm)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: isFactOpen ? '0.65rem' : 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{
+              background: 'rgba(217, 119, 6, 0.15)',
+              color: 'var(--color-gold)',
+              padding: '0.3rem',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Lightbulb size={16} />
+            </span>
+            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--color-text-main)' }}>
+              Você Sabia? • Política Brasileira, Poderes, Economia & Finanças
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <button
+              onClick={handleNextFact}
+              className="btn btn-outline"
+              style={{ fontSize: '0.76rem', padding: '0.25rem 0.65rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+              title="Ver outro fato"
+            >
+              <Shuffle size={12} />
+              Outro Fato
+            </button>
+            <button
+              onClick={() => setIsFactOpen(!isFactOpen)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--color-text-muted)',
+                cursor: 'pointer',
+                padding: '0.2rem',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title={isFactOpen ? 'Minimizar' : 'Expandir'}
+            >
+              {isFactOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+          </div>
+        </div>
+
+        {isFactOpen && (
+          <div>
+            {/* Category Filter Pills */}
+            <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.4rem', marginBottom: '0.55rem' }}>
+              {[
+                { id: 'all', label: 'Todos' },
+                { id: 'politica', label: '🏛️ Política' },
+                { id: 'poderes', label: '⚖️ Três Poderes' },
+                { id: 'economia', label: '📈 Economia' },
+                { id: 'financas', label: '💰 Finanças' }
+              ].map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => { setFactFilter(cat.id); setFactIndex(0); }}
+                  style={{
+                    flexShrink: 0,
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: 'var(--border-radius-full)',
+                    border: factFilter === cat.id ? '1px solid var(--color-gold)' : '1px solid var(--border-color)',
+                    background: factFilter === cat.id ? 'var(--color-gold)' : 'var(--bg-app)',
+                    color: factFilter === cat.id ? '#ffffff' : 'var(--color-text-muted)',
+                    fontSize: '0.74rem',
+                    fontWeight: factFilter === cat.id ? 700 : 500,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Current Fact Card */}
+            <div style={{
+              background: 'var(--bg-app)',
+              borderRadius: 'var(--border-radius-md)',
+              padding: '0.75rem',
+              borderLeft: `4px solid ${activeFact.color}`
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem', flexWrap: 'wrap', gap: '0.3rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: activeFact.color }}>
+                  {activeFact.categoryIcon} {activeFact.categoryLabel}
+                </span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                  Fato {(factIndex % filteredFacts.length) + 1} de {filteredFacts.length}
+                </span>
+              </div>
+
+              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-text-main)', marginBottom: '0.35rem' }}>
+                {activeFact.title}
+              </div>
+
+              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-main)', lineHeight: 1.45, marginBottom: '0.55rem' }}>
+                {activeFact.textPt}
+              </p>
+
+              {/* Bilingual Learning Box */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '0.5rem',
+                background: 'var(--bg-surface)',
+                padding: '0.45rem 0.65rem',
+                borderRadius: 'var(--border-radius-sm)',
+                border: '1px solid var(--border-color)',
+                marginBottom: '0.5rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-gold)' }}>
+                    🇺🇸 Termo em Inglês:
+                  </span>
+                  <span style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--color-text-main)' }}>
+                    {activeFact.englishTerm}
+                  </span>
+                  <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                    {activeFact.ipa}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                    • {activeFact.termMeaning}
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => handleSpeak(activeFact.englishTerm, 'fact-term')}
+                  className="btn btn-outline"
+                  style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  title="Ouvir pronúncia em inglês"
+                >
+                  <Volume2 size={13} className={speakingMsgId === 'fact-term' ? 'speaking-pulse' : ''} />
+                  Ouvir
+                </button>
+              </div>
+
+              {/* Action: Ask Grace about this fact */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <button
+                  onClick={() => handleSend(activeFact.prompt)}
+                  disabled={isLoading}
+                  className="btn btn-gold"
+                  style={{ fontSize: '0.76rem', padding: '0.3rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <Sparkles size={13} />
+                  Conversar com Grace sobre isso →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Chat Messages Container */}

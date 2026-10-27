@@ -49,7 +49,7 @@ export const Navbar = ({ activeTab, onSelectTab, onOpenSettings }) => {
     { id: 'devotionals', label: 'Devocionais', icon: <Heart size={17} /> },
     { id: 'news', label: 'Notícias', icon: <Newspaper size={17} /> },
     { id: 'flashcards', label: 'Memorização', icon: <Layers size={17} /> },
-    { id: 'ai-tutor', label: 'Tutor IA', icon: <Bot size={17} /> },
+    { id: 'ai-tutor', label: 'Tutor', icon: <Bot size={17} /> },
     { id: 'worship', label: 'Louvores', icon: <Music size={17} /> },
     { id: 'progress', label: 'Progresso', icon: <BarChart3 size={17} /> },
     { id: 'couple-hub', label: 'Hub Casal', icon: <Sparkles size={17} /> }
