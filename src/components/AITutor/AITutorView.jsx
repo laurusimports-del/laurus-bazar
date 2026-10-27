@@ -23,7 +23,7 @@ import { askAITutor } from '../../services/geminiService';
 import { speechService } from '../../services/speechService';
 import { useUser } from '../../context/UserContext';
 
-// Curated facts on Brazilian politics, powers, economy and finance
+// Curated bilingual facts on Brazilian politics, powers, economy and finance
 const DID_YOU_KNOW_FACTS = [
   {
     id: 'selic-copom',
@@ -31,8 +31,10 @@ const DID_YOU_KNOW_FACTS = [
     categoryLabel: 'Finanças & Moeda',
     categoryIcon: '💰',
     color: '#10b981',
-    title: 'O que é a Taxa Selic e como o Copom decide os juros?',
-    textPt: 'A Selic é a taxa básica de juros da economia brasileira, fixada a cada 45 dias pelo Copom (Banco Central). Quando a Selic sobe, o crédito encarece e o consumo desacelera para frear a inflação. Quando cai, barateia empréstimos e estimula investimentos. Na visão da Escola Austríaca (Mises e Hayek), os juros refletem a preferência temporal das pessoas e governos não devem manipulá-los artificialmente.',
+    titleEn: 'What is the Selic Rate and How Does Copom Set Benchmark Interest Rates?',
+    titlePt: 'O que é a Taxa Selic e como o Copom decide os juros da economia?',
+    textEn: "The Selic rate is Brazil's benchmark interest rate, set every 45 days by Copom (the Central Bank's Monetary Policy Committee). When the Selic rises, borrowing becomes more expensive and consumer spending cools down to curb monetary inflation. When it falls, business credit expands and investment accelerates. From an Austrian economics perspective (Mises and Hayek), interest rates reflect people's natural time preference and should never be artificially distorted by bureaucratic intervention.",
+    textPt: 'A Selic é a taxa básica de juros da economia brasileira, fixada a cada 45 dias pelo Copom (Banco Central). Quando a Selic sobe, o crédito encarece e o consumo desacelera para frear a inflação. Quando cai, barateia empréstimos e estimula investimentos. Na visão da Escola Austríaca (Mises e Hayek), os juros refletem a preferência temporal das pessoas e não devem ser manipulados artificialmente pelo Estado.',
     englishTerm: 'Benchmark Interest Rate',
     ipa: '/ˈbentʃ.mɑːrk ˈɪn.trɪst reɪt/',
     termMeaning: 'Taxa básica de juros de referência da economia',
@@ -46,7 +48,9 @@ const DID_YOU_KNOW_FACTS = [
     categoryLabel: 'Os Três Poderes',
     categoryIcon: '⚖️',
     color: '#6366f1',
-    title: 'Como funciona a divisão dos Três Poderes e os freios e contrapesos no Brasil?',
+    titleEn: 'How Does the Separation of Powers and Checks and Balances Work in Brazil?',
+    titlePt: 'Como funciona a divisão dos Três Poderes e os freios e contrapesos no Brasil?',
+    textEn: "The Constitution divides the Republic into three independent and harmonious branches: the Legislative (Congress drafts laws and scrutinizes the public budget), the Executive (the Presidency administers public policy), and the Judiciary (the Supreme Court applies constitutional law). Montesquieu's classical doctrine of 'checks and balances' ensures that no single branch usurps authority or consolidates tyrannical power.",
     textPt: 'A Constituição divide a República em três poderes independentes e harmônicos: o Legislativo (Câmara e Senado criam leis e fiscalizam gastos), o Executivo (Presidência administra o governo) e o Judiciário (STF e tribunais aplicam a lei). O princípio clássico de Montesquieu de freios e contrapesos (checks and balances) existe para evitar que um poder usurpe as funções do outro ou se torne tirânico.',
     englishTerm: 'Checks and Balances',
     ipa: '/tʃeks ænd ˈbæl.ən.sɪz/',
@@ -61,14 +65,16 @@ const DID_YOU_KNOW_FACTS = [
     categoryLabel: 'Economia Brasileira',
     categoryIcon: '📈',
     color: '#d97706',
-    title: 'Por que o Agronegócio sustenta as contas externas do Brasil?',
+    titleEn: "Why Does Brazilian Agribusiness Anchor the Nation's Foreign Trade Surplus?",
+    titlePt: 'Por que o Agronegócio sustenta as contas externas e o superávit do Brasil?',
+    textEn: "Brazilian agribusiness is one of the most technologically advanced on earth, accounting for nearly 50% of the country's total exports. By delivering record harvests of soybeans, corn, and livestock to Asian, European, and American markets, the sector generates massive dollar inflows, expanding foreign exchange reserves and stabilizing the national currency.",
     textPt: 'O agronegócio brasileiro é um dos mais produtivos e tecnológicos do planeta, respondendo por quase 50% de todas as exportações do país. Ao exportar safras históricas de soja, milho e carnes para a Ásia, Europa e Américas, o setor injeta bilhões de dólares no Brasil, gerando superávits na balança comercial e sustentando as reservas internacionais do Banco Central.',
     englishTerm: 'Trade Surplus',
     ipa: '/treɪd ˈsɝː.pləs/',
     termMeaning: 'Superávit na balança comercial (exportações > importações)',
     exampleEn: 'A strong agricultural trade surplus bolsters foreign currency reserves.',
-    examplePt: 'Um forte superávit comercial no agronegócio fortalece as reservas em moeda estrangeira.'
-    ,prompt: 'Grace, me ensine termos em inglês sobre o agronegócio brasileiro e seu papel estratégico no comércio internacional.'
+    examplePt: 'Um forte superávit comercial no agronegócio fortalece as reservas em moeda estrangeira.',
+    prompt: 'Grace, me ensine termos em inglês sobre o agronegócio brasileiro e seu papel estratégico no comércio internacional.'
   },
   {
     id: 'congresso-orcamento',
@@ -76,11 +82,13 @@ const DID_YOU_KNOW_FACTS = [
     categoryLabel: 'Política Brasileira',
     categoryIcon: '🏛️',
     color: '#8b5cf6',
-    title: 'Quem realmente tem a palavra final sobre o dinheiro público no Brasil?',
-    textPt: 'Embora o Executivo elabore a proposta do orçamento anual (LOA), quem tem a autoridade constitucional de aprovar, modificar, cortar gastos e autorizar impostos é o Congresso Nacional (deputados e senadores). Nenhum imposto novo ou despesa pública pode ser cobrado do povo sem autorização expressa do parlamento.',
+    titleEn: 'Who Truly Controls Public Spending in the Brazilian Republic?',
+    titlePt: 'Quem realmente tem a palavra final sobre o dinheiro público no Brasil?',
+    textEn: "While the Executive branch drafts the annual budgetary proposal, the National Congress (the Chamber of Deputies and Senate) holds the supreme constitutional authority to approve, amend, or veto expenditures. Rooted in the constitutional 'power of the purse', no tax or state spending can be legally enacted without the direct consent of the people's elected representatives.",
+    textPt: 'Embora o Executivo elabore a proposta do orçamento anual (LOA), quem tem a autoridade constitucional de aprovar, modificar, cortar gastos e autorizar impostos é o Congresso Nacional (deputados e senadores). Pelo princípio do "power of the purse", nenhum imposto ou gasto estatal pode existir sem aprovação expressa do parlamento.',
     englishTerm: 'Power of the Purse',
     ipa: '/ˈpaʊ.ɚ əv ðə pɝːs/',
-    termMeaning: 'Autoridade parlamentar sobre o orçamento e gastos públicos',
+    termMeaning: 'Autoridade orçamentária do parlamento sobre os gastos públicos',
     exampleEn: 'Congress exercises the power of the purse to hold state spending accountable.',
     examplePt: 'O Congresso exerce a autoridade do orçamento para fiscalizar os gastos estatais.',
     prompt: 'Grace, como explicar em inglês a aprovação do orçamento público e o papel fiscalizador do Congresso Nacional?'
@@ -91,7 +99,9 @@ const DID_YOU_KNOW_FACTS = [
     categoryLabel: 'Finanças & Poupança',
     categoryIcon: '💵',
     color: '#059669',
-    title: 'Juros Nominais vs. Juros Reais: O que realmente protege o patrimônio?',
+    titleEn: 'Nominal vs. Real Interest Rates: What Truly Protects Family Wealth?',
+    titlePt: 'Juros Nominais vs. Juros Reais: O que realmente protege o patrimônio?',
+    textEn: 'Nominal interest is the raw annual percentage yielded by an investment (e.g., 12% per year). Real interest is the net purchasing power gained after deducting inflation. If inflation runs at 4%, the real return is roughly 8%. Families only build genuine intergenerational wealth when investment yields comfortably outpace monetary currency devaluation.',
     textPt: 'O juro nominal é o percentual bruto prometido pela aplicação (ex: 12% ao ano). O juro real é o ganho que sobra após subtrair a inflação (IPCA). Se a inflação foi de 4%, o juro real é cerca de 8%. A família só constrói patrimônio real se a rentabilidade for superior à perda do poder de compra da moeda.',
     englishTerm: 'Real Interest Rate',
     ipa: '/riːl ˈɪn.trɪst reɪt/',
@@ -106,7 +116,9 @@ const DID_YOU_KNOW_FACTS = [
     categoryLabel: 'Poder Judiciário',
     categoryIcon: '🏛️',
     color: '#3b82f6',
-    title: 'Qual é o papel original do STF segundo a Constituição?',
+    titleEn: "What is the Supreme Court's Constitutional Role and Judicial Restraint?",
+    titlePt: 'Qual é o papel original do STF segundo a Constituição?',
+    textEn: "Inspired by the United States Supreme Court, the Brazilian Federal Supreme Court (STF) was designed as the ultimate guardian of the Constitution. Its duty is to protect fundamental liberties, due process, and the separation of powers through the principle of 'judicial restraint', ensuring magistrates do not usurp the lawmaking prerogative of Congress.",
     textPt: 'Inspirado na Suprema Corte dos Estados Unidos, o STF foi desenhado para ser o guardião da Constituição (Art. 102). Sua função essencial é proteger direitos fundamentais, como a liberdade de expressão e a separação dos poderes, atuando sob o princípio da autocontenção judicial (judicial restraint), sem invadir o papel legislativo do Congresso.',
     englishTerm: 'Judicial Restraint',
     ipa: '/dʒuːˈdɪʃ.əl rɪˈstreɪnt/',
@@ -196,7 +208,7 @@ export const AITutorView = ({ onOpenSettings }) => {
     }
   };
 
-  const handleSpeak = (text, msgId) => {
+  const handleSpeak = (text, msgId, options = {}) => {
     if (speakingMsgId === msgId) {
       speechService.stop();
       setSpeakingMsgId(null);
@@ -205,7 +217,8 @@ export const AITutorView = ({ onOpenSettings }) => {
 
     setSpeakingMsgId(msgId);
     speechService.speak(text, {
-      rate: 0.85,
+      rate: options.isPortuguese ? 0.95 : 0.85,
+      ...options,
       onEnd: () => setSpeakingMsgId(null),
       onError: () => setSpeakingMsgId(null)
     });
@@ -367,7 +380,7 @@ export const AITutorView = ({ onOpenSettings }) => {
               overflow: 'hidden',
               textOverflow: 'ellipsis'
             }}>
-              Você Sabia? • {activeFact.title}
+              💡 Você Sabia? / Did You Know? • {activeFact.titlePt || activeFact.titleEn}
             </span>
           </div>
 
@@ -422,75 +435,174 @@ export const AITutorView = ({ onOpenSettings }) => {
             <div style={{
               background: 'var(--bg-app)',
               borderRadius: 'var(--border-radius-md)',
-              padding: '0.65rem',
-              borderLeft: `3px solid ${activeFact.color}`
+              padding: '0.75rem',
+              borderLeft: `4px solid ${activeFact.color}`,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.65rem'
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', flexWrap: 'wrap', gap: '0.3rem' }}>
-                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: activeFact.color }}>
+              {/* Category & Counter */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.3rem' }}>
+                <span style={{ fontSize: '0.74rem', fontWeight: 800, color: activeFact.color, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                   {activeFact.categoryIcon} {activeFact.categoryLabel}
                 </span>
-                <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>
+                <span className="badge" style={{ fontSize: '0.68rem', background: 'var(--bg-surface)', border: '1px solid var(--border-color)', color: 'var(--color-text-muted)' }}>
                   Fato {(factIndex % filteredFacts.length) + 1} de {filteredFacts.length}
                 </span>
               </div>
 
-              <div style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--color-text-main)', marginBottom: '0.3rem' }}>
-                {activeFact.title}
+              {/* Bilingual Titles */}
+              <div>
+                <div style={{ fontWeight: 800, fontSize: '0.92rem', color: 'var(--color-gold)', lineHeight: 1.35, marginBottom: '0.2rem' }}>
+                  🇺🇸 {activeFact.titleEn}
+                </div>
+                <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--color-text-muted)', lineHeight: 1.35 }}>
+                  🇧🇷 {activeFact.titlePt}
+                </div>
               </div>
 
-              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-main)', lineHeight: 1.45, marginBottom: '0.5rem' }}>
-                {activeFact.textPt}
-              </p>
-
-              {/* Bilingual Learning Box */}
+              {/* Bilingual Text Grid / Cards */}
               <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '0.4rem',
-                background: 'var(--bg-surface)',
-                padding: '0.4rem 0.55rem',
-                borderRadius: 'var(--border-radius-sm)',
-                border: '1px solid var(--border-color)',
-                marginBottom: '0.45rem'
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gap: '0.6rem'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-gold)' }}>
-                    🇺🇸 Termo em Inglês:
-                  </span>
-                  <span style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--color-text-main)' }}>
-                    {activeFact.englishTerm}
-                  </span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                    {activeFact.ipa}
-                  </span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
-                    • {activeFact.termMeaning}
-                  </span>
+                {/* 🇺🇸 English Card */}
+                <div style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  padding: '0.65rem 0.75rem',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      🇺🇸 English Explanation
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleSpeak(`${activeFact.titleEn}. ${activeFact.textEn}`, 'fact-en'); }}
+                      className="btn btn-outline"
+                      style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', minHeight: '24px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                      title="Ouvir explicação completa em inglês"
+                    >
+                      <Volume2 size={12} className={speakingMsgId === 'fact-en' ? 'speaking-pulse' : ''} />
+                      {speakingMsgId === 'fact-en' ? 'Parar' : 'Ouvir em Inglês'}
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '0.81rem', color: 'var(--color-text-main)', lineHeight: 1.5, margin: 0 }}>
+                    {activeFact.textEn}
+                  </p>
                 </div>
 
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleSpeak(activeFact.englishTerm, 'fact-term'); }}
-                  className="btn btn-outline"
-                  style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', minHeight: '26px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                  title="Ouvir pronúncia em inglês"
-                >
-                  <Volume2 size={12} className={speakingMsgId === 'fact-term' ? 'speaking-pulse' : ''} />
-                  Ouvir
-                </button>
+                {/* 🇧🇷 Portuguese Card */}
+                <div style={{
+                  background: 'var(--bg-surface)',
+                  borderRadius: 'var(--border-radius-sm)',
+                  padding: '0.65rem 0.75rem',
+                  border: '1px solid rgba(16, 185, 129, 0.25)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-emerald)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                      🇧🇷 Tradução Explicativa
+                    </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleSpeak(`${activeFact.titlePt}. ${activeFact.textPt}`, 'fact-pt', { isPortuguese: true }); }}
+                      className="btn btn-outline"
+                      style={{ fontSize: '0.68rem', padding: '0.15rem 0.45rem', minHeight: '24px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                      title="Ouvir explicação em português"
+                    >
+                      <Volume2 size={12} className={speakingMsgId === 'fact-pt' ? 'speaking-pulse' : ''} />
+                      {speakingMsgId === 'fact-pt' ? 'Parar' : 'Ouvir em Português'}
+                    </button>
+                  </div>
+                  <p style={{ fontSize: '0.81rem', color: 'var(--color-text-muted)', lineHeight: 1.5, margin: 0 }}>
+                    {activeFact.textPt}
+                  </p>
+                </div>
+              </div>
+
+              {/* Key Vocabulary & Practice Sentence */}
+              <div style={{
+                background: 'var(--bg-surface)',
+                borderRadius: 'var(--border-radius-sm)',
+                padding: '0.55rem 0.75rem',
+                border: '1px solid var(--border-color)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
+                    <span className="badge badge-gold" style={{ fontSize: '0.68rem', padding: '0.1rem 0.45rem' }}>
+                      🇺🇸 Termo-Chave
+                    </span>
+                    <span style={{ fontWeight: 800, fontSize: '0.86rem', color: 'var(--color-text-main)' }}>
+                      {activeFact.englishTerm}
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--color-gold)', fontStyle: 'italic' }}>
+                      {activeFact.ipa}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                      • {activeFact.termMeaning}
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={(e) => { e.stopPropagation(); handleSpeak(activeFact.englishTerm, 'fact-term'); }}
+                    className="btn btn-outline"
+                    style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', minHeight: '26px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                    title="Ouvir pronúncia do termo em inglês"
+                  >
+                    <Volume2 size={12} className={speakingMsgId === 'fact-term' ? 'speaking-pulse' : ''} />
+                    Pronúncia
+                  </button>
+                </div>
+
+                {activeFact.exampleEn && (
+                  <div style={{
+                    paddingTop: '0.35rem',
+                    borderTop: '1px dashed var(--border-color)',
+                    fontSize: '0.75rem',
+                    lineHeight: 1.45,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.15rem'
+                  }}>
+                    <div style={{ color: 'var(--color-text-main)', display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      <span style={{ color: 'var(--color-gold)', fontWeight: 700 }}>Exemplo:</span>
+                      <span>"{activeFact.exampleEn}"</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleSpeak(activeFact.exampleEn, 'fact-example-en'); }}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-gold)', display: 'inline-flex', alignItems: 'center' }}
+                        title="Ouvir frase de exemplo"
+                      >
+                        <Volume2 size={11} className={speakingMsgId === 'fact-example-en' ? 'speaking-pulse' : ''} />
+                      </button>
+                    </div>
+                    {activeFact.examplePt && (
+                      <div style={{ color: 'var(--color-text-muted)', fontStyle: 'italic', paddingLeft: '0.5rem' }}>
+                        "{activeFact.examplePt}"
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Action: Ask Grace about this fact */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.1rem' }}>
                 <button
                   onClick={(e) => { e.stopPropagation(); handleSend(activeFact.prompt); }}
                   disabled={isLoading}
                   className="btn btn-gold"
-                  style={{ fontSize: '0.74rem', padding: '0.25rem 0.65rem', minHeight: '30px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  style={{ fontSize: '0.76rem', padding: '0.3rem 0.75rem', minHeight: '32px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                 >
-                  <Sparkles size={12} />
-                  Conversar com Grace sobre isso →
+                  <Sparkles size={13} />
+                  Conversar com Grace sobre isso em Inglês →
                 </button>
               </div>
             </div>
