@@ -818,6 +818,9 @@ Você DEVE responder APENAS com um objeto JSON VÁLIDO (sem crases adicionais de
                   <option value="technology">💻 Tecnologia & IA</option>
                   <option value="cybersecurity">🛡️ Cibersegurança & Crimes Digitais</option>
                   <option value="politics">🏛️ Política & Geopolítica Internacional</option>
+                  <option value="philosophy-culture">🏛️ Filosofia & Tradição (Olavo, Nietzsche, BP)</option>
+                  <option value="capitalism-liberty">💰 Capitalismo & Livre Mercado (Mises, Hayek)</option>
+                  <option value="homeschooling-education">📚 Educação & Homeschooling (Trivium, Família)</option>
                   <option value="economy">📈 Economia & Inflação Global</option>
                   <option value="stocks">📊 Bolsa de Valores & Ações de Wall Street</option>
                   <option value="personal-development">🚀 Desenvolvimento Pessoal & Hábitos</option>
@@ -826,12 +829,12 @@ Você DEVE responder APENAS com um objeto JSON VÁLIDO (sem crases adicionais de
 
               <div>
                 <label style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '0.35rem' }}>
-                  Tema Específico ou Empresa (Ex: Nvidia Q3, Apple Vision Pro, Taxa Selic, Deepfake, Atomic Habits):
+                  Tema Específico ou Autor (Ex: Olavo de Carvalho, Nietzsche, Escola Austríaca, Homeschooling, Nvidia, Fed):
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Novo chip quântico, Eleições dos EUA, Rotinas matinais de CEOs..."
+                  placeholder="Ex: Primazia da Realidade, Crise do Niilismo, Como Educar Seus Filhos, Livre Mercado..."
                   value={aiTopicInput}
                   onChange={e => setAiTopicInput(e.target.value)}
                   style={{
@@ -854,11 +857,13 @@ Você DEVE responder APENAS com um objeto JSON VÁLIDO (sem crases adicionais de
                 </span>
                 <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
                   {[
+                    'Olavo de Carvalho & Primazia da Realidade',
+                    'Nietzsche & Crise do Niilismo',
+                    'Capitalismo & Escola Austríaca',
+                    'Homeschooling & O Trivium Clássico',
+                    'Como Educar Seus Filhos (Brasil Paralelo)',
                     'Nvidia & AI Boom',
-                    'Ransomware Defense 2026',
-                    'Federal Reserve Interest Rates',
-                    'Deep Work vs Multitasking',
-                    'Semiconductor Geopolitics'
+                    'Federal Reserve Interest Rates'
                   ].map((sug, sIdx) => (
                     <button
                       key={sIdx}

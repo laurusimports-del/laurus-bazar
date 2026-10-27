@@ -25,7 +25,7 @@ export const AITutorView = ({ onOpenSettings }) => {
     {
       id: 1,
       sender: 'ai',
-      text: `Hello, ${currentProfileName}! I'm **Grace**, your personal Christian English tutor. 🕊️\n\nEstou aqui para acompanhar você e seu amor nos estudos da Bíblia, vocabulário do casal, leitura de **notícias internacionais** (tecnologia, finanças e política) e princípios de **educação de filhos e família**. Como posso abençoar o estudo de vocês hoje?`
+      text: `Hello, ${currentProfileName}! I'm **Grace**, your personal Christian English tutor. 🕊️\n\nEstou aqui para acompanhar você e seu amor nos estudos da Bíblia, casamento, **filosofia e cultura clássica** (Olavo de Carvalho, Nietzsche, Brasil Paralelo), **capitalismo e livre mercado** (Escola Austríaca), **educação de filhos e homeschooling clássico** (Trivium, Charlotte Mason) e leitura de notícias internacionais. Como posso enriquecer o estudo de vocês hoje?`
     }
   ]);
   const [inputText, setInputText] = useState('');
@@ -103,13 +103,28 @@ export const AITutorView = ({ onOpenSettings }) => {
   const starterChips = [
     {
       icon: <Sparkles size={14} color="#6366f1" />,
-      label: '📰 Notícias & Mercado Global',
-      prompt: 'Grace, como posso discutir notícias internacionais de tecnologia, inteligência artificial e economia em inglês? Me ensine 5 termos essenciais com pronúncia.'
+      label: '🏛️ Olavo & Primazia da Realidade',
+      prompt: 'Grace, como podemos discutir em inglês a filosofia de Olavo de Carvalho sobre a primazia da realidade, a teoria dos 4 discursos e a formação do imaginário moral? Nos ensine vocabulário clássico.'
     },
     {
-      icon: <Shield size={14} color="var(--color-emerald)" />,
-      label: '🛡️ Filho Rebelde & Limites com Amor',
-      prompt: 'Grace, como conversar com um filho rebelde em inglês usando amor bíblico, firmeza moral e restauração de aliança? Me dê frases práticas de exemplo.'
+      icon: <Shield size={14} color="var(--color-rose)" />,
+      label: '⚡ Nietzsche & Crise do Niilismo',
+      prompt: 'Grace, me ajude a analisar em inglês o diagnóstico de Friedrich Nietzsche sobre a crise do niilismo ocidental e a busca pela verdade sob uma cosmovisão cristã e filosófica sólida.'
+    },
+    {
+      icon: <Compass size={14} color="#10b981" />,
+      label: '💰 Capitalismo & Escola Austríaca',
+      prompt: 'Grace, me ensine termos essenciais em inglês sobre o livre mercado, a Escola Austríaca (Mises e Hayek), a ordem espontânea e por que a livre iniciativa retira milhões da pobreza.'
+    },
+    {
+      icon: <BookOpen size={14} color="#8b5cf6" />,
+      label: '📚 Homeschooling & O Trivium Clássico',
+      prompt: 'Grace, como explicar o homeschooling clássico e as três etapas do Trivium (Grammar, Logic, Rhetoric) em inglês para enriquecer a educação dos nossos filhos?'
+    },
+    {
+      icon: <Users size={14} color="var(--color-emerald)" />,
+      label: '🏡 Como Educar Seus Filhos (Brasil Paralelo)',
+      prompt: 'Grace, com base nos princípios da série "Como Educar Seus Filhos" (Brasil Paralelo) e Charlotte Mason, como cultivar hábitos nobres e virtudes nos filhos em inglês?'
     },
     {
       icon: <Coffee size={14} color="var(--color-gold)" />,
@@ -122,14 +137,9 @@ export const AITutorView = ({ onOpenSettings }) => {
       prompt: 'Grace, me ensine frases em inglês para aplicar as 5 Linguagens do Amor com meu cônjuge e com os filhos, abastecendo o "emotional tank" de cada um.'
     },
     {
-      icon: <BookOpen size={14} color="var(--color-gold)" />,
-      label: '🙏 Como orar em inglês a dois',
-      prompt: 'Grace, como podemos orar juntos em inglês antes de dormir abençoando nosso casamento e nossos filhos de forma simples, sincera e natural?'
-    },
-    {
-      icon: <Compass size={14} color="#f59e0b" />,
-      label: '🧠 Razões Morais (Moral Reasons)',
-      prompt: 'Grace, como ensinar "moral reasons" em inglês em vez de apenas dar ordens secas? Nos dê exemplos práticos do dia a dia da família.'
+      icon: <Sparkles size={14} color="#0284c7" />,
+      label: '📰 Notícias Internacionais & Geopolítica',
+      prompt: 'Grace, como discutir notícias internacionais de economia global, inteligência artificial e geopolítica em inglês? Me ensine 5 termos essenciais com pronúncia.'
     }
   ];
 
