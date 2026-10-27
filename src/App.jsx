@@ -184,7 +184,7 @@ const MainApp = () => {
       />
 
       {/* Main Dynamic View Content */}
-      <main className="main-content">
+      <main className={`main-content ${activeTab === 'ai-tutor' ? 'main-content-tutor' : ''}`}>
         {activeTab === 'bible' && (
           <BibleView 
             onOpenDevotional={handleOpenDevotional} 
@@ -206,29 +206,31 @@ const MainApp = () => {
         {activeTab === 'couple-hub' && <CoupleDashboard />}
       </main>
 
-      {/* Footer */}
-      <footer style={{
-        borderTop: '1px solid var(--border-color)',
-        background: 'var(--bg-surface)',
-        padding: '1.75rem 1rem',
-        textAlign: 'center',
-        marginTop: 'auto'
-      }}>
-        <div style={{ maxWidth: '1140px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
-            <span>Adam's & Fluency</span>
-            <span style={{ color: 'var(--color-gold)' }}>•</span>
-            <span>{currentProfileName} & {spouseProfileName}</span>
-            <Heart size={14} color="var(--color-rose)" fill="currentColor" />
+      {/* Footer (Hidden on AI Tutor to maximize chat room) */}
+      {activeTab !== 'ai-tutor' && (
+        <footer style={{
+          borderTop: '1px solid var(--border-color)',
+          background: 'var(--bg-surface)',
+          padding: '1.75rem 1rem',
+          textAlign: 'center',
+          marginTop: 'auto'
+        }}>
+          <div style={{ maxWidth: '1140px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', fontWeight: 700, color: 'var(--color-text-main)' }}>
+              <span>Adam's & Fluency</span>
+              <span style={{ color: 'var(--color-gold)' }}>•</span>
+              <span>{currentProfileName} & {spouseProfileName}</span>
+              <Heart size={14} color="var(--color-rose)" fill="currentColor" />
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+              “Trust in the Lord with all your heart and lean not on your own understanding.” — Proverbs 3:5
+            </p>
+            <div style={{ fontSize: '0.74rem', color: 'var(--color-text-light)' }}>
+              Plataforma Personalizada de Inglês, Devocionais & Louvores para Casais.
+            </div>
           </div>
-          <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-            “Trust in the Lord with all your heart and lean not on your own understanding.” — Proverbs 3:5
-          </p>
-          <div style={{ fontSize: '0.74rem', color: 'var(--color-text-light)' }}>
-            Plataforma Personalizada de Inglês, Devocionais & Louvores para Casais.
-          </div>
-        </div>
-      </footer>
+        </footer>
+      )}
 
       {/* Global Settings Modal */}
       <SettingsModal 

@@ -25,6 +25,24 @@ body,
   box-sizing: border-box;
 }
 
+.main-content-tutor {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1rem 1rem;
+  height: calc(100dvh - 80px);
+  max-height: calc(100dvh - 80px);
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .main-content-tutor {
+    padding: 0.35rem 0.5rem calc(68px + env(safe-area-inset-bottom, 0px)) !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    overflow: hidden !important;
+  }
+}
+
 /* Glassmorphism Cards */
 .card {
   background: var(--bg-card);

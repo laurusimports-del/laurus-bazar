@@ -131,7 +131,7 @@ export const AITutorView = ({ onOpenSettings }) => {
   const [speakingMsgId, setSpeakingMsgId] = useState(null);
   const [factIndex, setFactIndex] = useState(0);
   const [factFilter, setFactFilter] = useState('all');
-  const [isFactOpen, setIsFactOpen] = useState(true);
+  const [isFactOpen, setIsFactOpen] = useState(false); // Collapsed by default so chat has maximum vertical space
   const messagesEndRef = useRef(null);
 
   const filteredFacts = factFilter === 'all' 
@@ -139,7 +139,8 @@ export const AITutorView = ({ onOpenSettings }) => {
     : DID_YOU_KNOW_FACTS.filter(f => f.category === factFilter);
   const activeFact = filteredFacts[factIndex % filteredFacts.length] || DID_YOU_KNOW_FACTS[0];
 
-  const handleNextFact = () => {
+  const handleNextFact = (e) => {
+    e?.stopPropagation();
     setFactIndex(prev => prev + 1);
   };
 
@@ -254,36 +255,54 @@ export const AITutorView = ({ onOpenSettings }) => {
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100dvh - 200px)', minHeight: '420px' }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-            <span className="badge badge-gold">
-              <Bot size={13} />
-              Faith & Language Companion • Grace
-            </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-emerald)', fontWeight: 600 }}>
-              🟢 Grace Online (Google Gemini Ativo)
-            </span>
-          </div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      flex: 1,
+      minHeight: 0,
+      width: '100%',
+      boxSizing: 'border-box'
+    }}>
+      {/* Header Compacto e Responsivo */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '0.45rem',
+        flexWrap: 'wrap',
+        gap: '0.4rem',
+        flexShrink: 0
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h1 style={{ fontSize: '1.45rem', fontWeight: 800, margin: 0 }}>
             TUTOR 🕊️
           </h1>
+          <span className="badge badge-gold" style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem' }}>
+            Grace Online
+          </span>
         </div>
 
         <button 
           onClick={onOpenSettings}
           className="btn btn-outline"
-          style={{ fontSize: '0.82rem', padding: '0.45rem 0.85rem' }}
+          style={{ fontSize: '0.76rem', padding: '0.3rem 0.65rem', minHeight: '32px' }}
         >
-          <Settings size={15} />
-          Configurar Chave IA
+          <Settings size={13} />
+          Chave IA
         </button>
       </div>
 
       {/* Starter Prompts Horizontal Scroll */}
-      <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.5rem', marginBottom: '0.85rem' }}>
+      <div style={{
+        display: 'flex',
+        gap: '0.4rem',
+        overflowX: 'auto',
+        paddingBottom: '0.35rem',
+        marginBottom: '0.45rem',
+        scrollbarWidth: 'none',
+        flexShrink: 0
+      }}>
         {starterChips.map((chip, idx) => (
           <button
             key={idx}
@@ -292,8 +311,9 @@ export const AITutorView = ({ onOpenSettings }) => {
             className="btn btn-outline"
             style={{ 
               flexShrink: 0, 
-              fontSize: '0.82rem', 
-              padding: '0.4rem 0.85rem', 
+              fontSize: '0.75rem', 
+              padding: '0.3rem 0.65rem', 
+              minHeight: '32px',
               borderRadius: 'var(--border-radius-full)',
               background: 'var(--bg-surface)'
             }}
@@ -304,65 +324,73 @@ export const AITutorView = ({ onOpenSettings }) => {
         ))}
       </div>
 
-      {/* VOCÊ SABIA? • Política Brasileira, Poderes, Economia & Finanças */}
+      {/* VOCÊ SABIA? • Política Brasileira, Poderes, Economia & Finanças (Compacto e Expansível) */}
       <div style={{
         background: 'var(--bg-surface)',
-        border: '1.5px solid var(--border-color)',
-        borderRadius: 'var(--border-radius-lg)',
-        padding: '0.85rem 1rem',
-        marginBottom: '0.85rem',
-        boxShadow: 'var(--shadow-sm)'
+        border: '1px solid var(--border-color)',
+        borderRadius: 'var(--border-radius-md)',
+        padding: '0.45rem 0.75rem',
+        marginBottom: '0.45rem',
+        boxShadow: 'var(--shadow-sm)',
+        flexShrink: 0,
+        transition: 'all 0.2s ease'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: isFactOpen ? '0.65rem' : 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+        <div 
+          onClick={() => setIsFactOpen(!isFactOpen)}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            cursor: 'pointer',
+            userSelect: 'none',
+            gap: '0.5rem'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0, overflow: 'hidden' }}>
             <span style={{
               background: 'rgba(217, 119, 6, 0.15)',
               color: 'var(--color-gold)',
-              padding: '0.3rem',
+              padding: '0.25rem',
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center'
+              justifyContent: 'center',
+              flexShrink: 0
             }}>
-              <Lightbulb size={16} />
+              <Lightbulb size={14} />
             </span>
-            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--color-text-main)' }}>
-              Você Sabia? • Política Brasileira, Poderes, Economia & Finanças
+            <span style={{
+              fontWeight: 700,
+              fontSize: '0.8rem',
+              color: 'var(--color-text-main)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              Você Sabia? • {activeFact.title}
             </span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
             <button
               onClick={handleNextFact}
               className="btn btn-outline"
-              style={{ fontSize: '0.76rem', padding: '0.25rem 0.65rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-              title="Ver outro fato"
+              style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', minHeight: '26px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+              title="Sortear outro fato"
             >
-              <Shuffle size={12} />
-              Outro Fato
+              <Shuffle size={11} />
+              Outro
             </button>
-            <button
-              onClick={() => setIsFactOpen(!isFactOpen)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--color-text-muted)',
-                cursor: 'pointer',
-                padding: '0.2rem',
-                display: 'flex',
-                alignItems: 'center'
-              }}
-              title={isFactOpen ? 'Minimizar' : 'Expandir'}
-            >
-              {isFactOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
+            <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>
+              {isFactOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+            </span>
           </div>
         </div>
 
         {isFactOpen && (
-          <div>
+          <div style={{ marginTop: '0.55rem', borderTop: '1px solid var(--border-color)', paddingTop: '0.5rem' }}>
             {/* Category Filter Pills */}
-            <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.4rem', marginBottom: '0.55rem' }}>
+            <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.35rem', marginBottom: '0.45rem' }}>
               {[
                 { id: 'all', label: 'Todos' },
                 { id: 'politica', label: '🏛️ Política' },
@@ -372,15 +400,15 @@ export const AITutorView = ({ onOpenSettings }) => {
               ].map(cat => (
                 <button
                   key={cat.id}
-                  onClick={() => { setFactFilter(cat.id); setFactIndex(0); }}
+                  onClick={(e) => { e.stopPropagation(); setFactFilter(cat.id); setFactIndex(0); }}
                   style={{
                     flexShrink: 0,
-                    padding: '0.2rem 0.6rem',
+                    padding: '0.2rem 0.55rem',
                     borderRadius: 'var(--border-radius-full)',
                     border: factFilter === cat.id ? '1px solid var(--color-gold)' : '1px solid var(--border-color)',
                     background: factFilter === cat.id ? 'var(--color-gold)' : 'var(--bg-app)',
                     color: factFilter === cat.id ? '#ffffff' : 'var(--color-text-muted)',
-                    fontSize: '0.74rem',
+                    fontSize: '0.72rem',
                     fontWeight: factFilter === cat.id ? 700 : 500,
                     cursor: 'pointer'
                   }}
@@ -394,23 +422,23 @@ export const AITutorView = ({ onOpenSettings }) => {
             <div style={{
               background: 'var(--bg-app)',
               borderRadius: 'var(--border-radius-md)',
-              padding: '0.75rem',
-              borderLeft: `4px solid ${activeFact.color}`
+              padding: '0.65rem',
+              borderLeft: `3px solid ${activeFact.color}`
             }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem', flexWrap: 'wrap', gap: '0.3rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 800, color: activeFact.color }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem', flexWrap: 'wrap', gap: '0.3rem' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: activeFact.color }}>
                   {activeFact.categoryIcon} {activeFact.categoryLabel}
                 </span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>
+                <span style={{ fontSize: '0.68rem', color: 'var(--color-text-muted)' }}>
                   Fato {(factIndex % filteredFacts.length) + 1} de {filteredFacts.length}
                 </span>
               </div>
 
-              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--color-text-main)', marginBottom: '0.35rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--color-text-main)', marginBottom: '0.3rem' }}>
                 {activeFact.title}
               </div>
 
-              <p style={{ fontSize: '0.82rem', color: 'var(--color-text-main)', lineHeight: 1.45, marginBottom: '0.55rem' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--color-text-main)', lineHeight: 1.45, marginBottom: '0.5rem' }}>
                 {activeFact.textPt}
               </p>
 
@@ -420,35 +448,35 @@ export const AITutorView = ({ onOpenSettings }) => {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
-                gap: '0.5rem',
+                gap: '0.4rem',
                 background: 'var(--bg-surface)',
-                padding: '0.45rem 0.65rem',
+                padding: '0.4rem 0.55rem',
                 borderRadius: 'var(--border-radius-sm)',
                 border: '1px solid var(--border-color)',
-                marginBottom: '0.5rem'
+                marginBottom: '0.45rem'
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--color-gold)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-gold)' }}>
                     🇺🇸 Termo em Inglês:
                   </span>
-                  <span style={{ fontWeight: 700, fontSize: '0.84rem', color: 'var(--color-text-main)' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--color-text-main)' }}>
                     {activeFact.englishTerm}
                   </span>
-                  <span style={{ fontSize: '0.74rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
                     {activeFact.ipa}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--color-text-muted)' }}>
                     • {activeFact.termMeaning}
                   </span>
                 </div>
 
                 <button
-                  onClick={() => handleSpeak(activeFact.englishTerm, 'fact-term')}
+                  onClick={(e) => { e.stopPropagation(); handleSpeak(activeFact.englishTerm, 'fact-term'); }}
                   className="btn btn-outline"
-                  style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                  style={{ fontSize: '0.7rem', padding: '0.15rem 0.45rem', minHeight: '26px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
                   title="Ouvir pronúncia em inglês"
                 >
-                  <Volume2 size={13} className={speakingMsgId === 'fact-term' ? 'speaking-pulse' : ''} />
+                  <Volume2 size={12} className={speakingMsgId === 'fact-term' ? 'speaking-pulse' : ''} />
                   Ouvir
                 </button>
               </div>
@@ -456,12 +484,12 @@ export const AITutorView = ({ onOpenSettings }) => {
               {/* Action: Ask Grace about this fact */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                 <button
-                  onClick={() => handleSend(activeFact.prompt)}
+                  onClick={(e) => { e.stopPropagation(); handleSend(activeFact.prompt); }}
                   disabled={isLoading}
                   className="btn btn-gold"
-                  style={{ fontSize: '0.76rem', padding: '0.3rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                  style={{ fontSize: '0.74rem', padding: '0.25rem 0.65rem', minHeight: '30px', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                 >
-                  <Sparkles size={13} />
+                  <Sparkles size={12} />
                   Conversar com Grace sobre isso →
                 </button>
               </div>
@@ -470,18 +498,20 @@ export const AITutorView = ({ onOpenSettings }) => {
         )}
       </div>
 
-      {/* Chat Messages Container */}
+      {/* Chat Messages Container: Expande e ocupa todo o espaço restante */}
       <div style={{
         flex: 1,
+        minHeight: 0,
         background: 'var(--bg-surface)',
         border: '1px solid var(--border-color)',
         borderRadius: 'var(--border-radius-xl)',
-        padding: '1.25rem',
+        padding: '1rem',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
-        gap: '1rem',
-        boxShadow: 'var(--shadow-sm)'
+        gap: '0.85rem',
+        boxShadow: 'var(--shadow-sm)',
+        WebkitOverflowScrolling: 'touch'
       }}>
         {messages.map((msg) => {
           const isUser = msg.sender === 'user';
@@ -581,9 +611,10 @@ export const AITutorView = ({ onOpenSettings }) => {
         }}
         style={{
           display: 'flex',
-          gap: '0.5rem',
-          marginTop: '0.85rem',
-          alignItems: 'center'
+          gap: '0.45rem',
+          marginTop: '0.45rem',
+          alignItems: 'center',
+          flexShrink: 0
         }}
       >
         <input
@@ -594,7 +625,7 @@ export const AITutorView = ({ onOpenSettings }) => {
           disabled={isLoading}
           style={{
             flex: 1,
-            padding: '0.85rem 1.2rem',
+            padding: '0.72rem 1.1rem',
             borderRadius: 'var(--border-radius-full)',
             border: '1px solid var(--border-color)',
             background: 'var(--bg-surface)',
@@ -609,7 +640,8 @@ export const AITutorView = ({ onOpenSettings }) => {
           disabled={isLoading || !inputText.trim()}
           className="btn btn-gold"
           style={{
-            padding: '0.85rem 1.4rem',
+            padding: '0.72rem 1.25rem',
+            minHeight: '44px',
             borderRadius: 'var(--border-radius-full)',
             boxShadow: 'var(--shadow-gold)'
           }}
