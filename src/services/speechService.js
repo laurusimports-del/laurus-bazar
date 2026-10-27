@@ -1,5 +1,5 @@
 // Professional & Resilient Bilingual Audio Speech Engine
-// Combines Human Native Audio (Dictionary API) + Web Speech API + High-Def Online TTS Fallback
+// Combines Human Native Audio (Dictionary API) + Web Speech API (with Sentence Chunking) + High-Def Online TTS Fallback
 
 class SpeechService {
   constructor() {
@@ -12,8 +12,8 @@ class SpeechService {
     this.currentText = '';
     this.onStateChangeCallbacks = new Set();
     this.activeAudio = null;
-    this.watchdogTimer = null;
     this.humanAudioCache = new Map();
+    this.playbackSessionId = 0;
 
     if (typeof window !== 'undefined' && this.synth) {
       if ('onvoiceschanged' in this.synth) {
@@ -93,17 +93,16 @@ class SpeechService {
   }
 
   stop() {
-    if (this.watchdogTimer) {
-      clearTimeout(this.watchdogTimer);
-      this.watchdogTimer = null;
-    }
+    this.playbackSessionId++;
 
     if (this.activeAudio) {
       try {
         this.activeAudio.pause();
         this.activeAudio.currentTime = 0;
+        this.activeAudio.src = '';
         this.activeAudio.onended = null;
         this.activeAudio.onerror = null;
+        this.activeAudio.onplay = null;
       } catch (e) {}
       this.activeAudio = null;
     }
@@ -125,6 +124,45 @@ class SpeechService {
   resume() {
     if (this.activeAudio) this.activeAudio.play().catch(() => {});
     if (this.synth) this.synth.resume();
+  }
+
+  // Divide textos longos (como artigos completos e devocionais) em trechos naturais de pontuação
+  // para que o navegador nunca pare a leitura no meio do caminho
+  splitTextIntoChunks(text, maxLength = 220) {
+    if (!text) return [];
+    const normalized = text.replace(/\r\n/g, '\n').replace(/\n+/g, '.\n');
+    const rawSentences = normalized.match(/[^.!?;\n]+[.!?;\n]+/g) || [normalized];
+    
+    const chunks = [];
+    let current = '';
+
+    for (const raw of rawSentences) {
+      const sentence = raw.trim();
+      if (!sentence) continue;
+
+      if (current.length + sentence.length + 1 <= maxLength) {
+        current = current ? `${current} ${sentence}` : sentence;
+      } else {
+        if (current) chunks.push(current);
+        if (sentence.length > maxLength) {
+          const words = sentence.split(' ');
+          let subChunk = '';
+          for (const w of words) {
+            if (subChunk.length + w.length + 1 <= maxLength) {
+              subChunk = subChunk ? `${subChunk} ${w}` : w;
+            } else {
+              if (subChunk) chunks.push(subChunk);
+              subChunk = w;
+            }
+          }
+          current = subChunk;
+        } else {
+          current = sentence;
+        }
+      }
+    }
+    if (current && current.trim()) chunks.push(current.trim());
+    return chunks;
   }
 
   // Tenta buscar áudio humano profissional (MP3 de estúdio) para palavras em inglês
@@ -157,7 +195,9 @@ class SpeechService {
   async speak(text, options = {}) {
     if (!text || !text.trim()) return;
 
+    // Cancela qualquer áudio anterior e inicia uma nova sessão única
     this.stop();
+    const sessionId = this.playbackSessionId;
 
     const cleanText = text.replace(/[*_#`~[\]]/g, '').trim();
     const lang = options.lang || (options.isPortuguese ? 'pt-BR' : 'en-US');
@@ -169,92 +209,165 @@ class SpeechService {
     if (isSingleWord && options.preferHuman !== false) {
       try {
         const humanAudioUrl = await this.fetchHumanAudioUrl(cleanText);
+        if (sessionId !== this.playbackSessionId) return;
         if (humanAudioUrl) {
-          const played = await this.playAudioUrl(humanAudioUrl, cleanText, rate, options);
+          const played = await this.playAudioUrl(humanAudioUrl, cleanText, rate, options, sessionId);
           if (played) return;
         }
       } catch (e) {}
     }
 
-    // 2. Tenta Web Speech API nativa (se houver voz compatível)
-    this.loadVoices();
-    const hasMatchingVoice = isPt
-      ? Boolean(this.selectedPtVoice || this.getPortugueseVoices().length > 0)
-      : Boolean(this.selectedEnVoice || this.getEnglishVoices().length > 0);
+    if (sessionId !== this.playbackSessionId) return;
 
-    if (this.synth && hasMatchingVoice) {
-      const synthSuccess = await this.speakViaSynthesis(cleanText, lang, rate, options);
-      if (synthSuccess) return;
+    // Divide em frases naturais para ler notícias completas e artigos longos até o fim
+    const chunks = this.splitTextIntoChunks(cleanText, 220);
+    if (chunks.length === 0) return;
+
+    this.notifyState(true, cleanText);
+    if (options.onStart) options.onStart();
+
+    // 2. Tenta Web Speech API nativa (sem race condition de duas vozes)
+    const hasSynth = typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis;
+    if (hasSynth) {
+      this.loadVoices();
+      try {
+        const synthSuccess = await this.playChunksViaSynthesis(chunks, lang, rate, sessionId, options);
+        if (synthSuccess) {
+          if (sessionId === this.playbackSessionId) {
+            this.notifyState(false, '');
+            if (options.onEnd) options.onEnd();
+          }
+          return;
+        }
+      } catch (e) {
+        console.warn('SpeechSynthesis encontrou erro, tentando fallback online:', e);
+      }
     }
 
-    // 3. Fallback online de alta qualidade (Google TTS sem restrição de Referer)
-    this.speakViaOnlineAudio(cleanText, lang, rate, options);
+    if (sessionId !== this.playbackSessionId) return;
+
+    // 3. Fallback online de alta qualidade executado sequencialmente chunk por chunk
+    await this.playChunksViaOnlineAudio(chunks, lang, rate, sessionId, options);
+    if (sessionId === this.playbackSessionId) {
+      this.notifyState(false, '');
+      if (options.onEnd) options.onEnd();
+    }
   }
 
-  speakViaSynthesis(cleanText, lang, rate, options = {}) {
+  // Reproduz sequencialmente cada frase usando a síntese nativa do navegador
+  playChunksViaSynthesis(chunks, lang, rate, sessionId, options = {}) {
     return new Promise((resolve) => {
-      try {
-        if (this.synth.paused) this.synth.resume();
+      let idx = 0;
 
-        const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.lang = lang;
-        utterance.rate = rate;
-        utterance.pitch = options.pitch || this.pitch;
-
-        const isPt = lang.toLowerCase().startsWith('pt');
-        if (isPt && this.selectedPtVoice) {
-          utterance.voice = this.selectedPtVoice;
-        } else if (!isPt && this.selectedEnVoice) {
-          utterance.voice = this.selectedEnVoice;
+      const speakNextChunk = () => {
+        if (sessionId !== this.playbackSessionId) {
+          resolve(false);
+          return;
+        }
+        if (idx >= chunks.length) {
+          resolve(true);
+          return;
         }
 
-        let started = false;
+        const currentChunk = chunks[idx];
+        idx++;
 
-        utterance.onstart = () => {
-          started = true;
-          if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
-          this.notifyState(true, cleanText);
-          if (options.onStart) options.onStart();
-        };
+        try {
+          if (this.synth.paused) this.synth.resume();
 
-        utterance.onend = () => {
-          if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
-          this.notifyState(false, '');
-          if (options.onEnd) options.onEnd();
-          resolve(true);
-        };
+          const utterance = new SpeechSynthesisUtterance(currentChunk);
+          utterance.lang = lang;
+          utterance.rate = rate;
+          utterance.pitch = options.pitch || this.pitch;
 
-        utterance.onerror = (e) => {
-          if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
-          // Se o erro foi cancelamento intencional, ignora
-          if (e.error === 'canceled' || e.error === 'interrupted') {
-            resolve(false);
-            return;
+          const isPt = lang.toLowerCase().startsWith('pt');
+          if (isPt && this.selectedPtVoice) {
+            utterance.voice = this.selectedPtVoice;
+          } else if (!isPt && this.selectedEnVoice) {
+            utterance.voice = this.selectedEnVoice;
           }
-          console.warn('SpeechSynthesis falhou, acionando áudio online:', e);
-          this.notifyState(false, '');
+
+          utterance.onend = () => {
+            if (sessionId === this.playbackSessionId) {
+              speakNextChunk();
+            }
+          };
+
+          utterance.onerror = (e) => {
+            if (e.error === 'canceled' || e.error === 'interrupted') {
+              resolve(false);
+              return;
+            }
+            console.warn('SpeechSynthesis chunk error:', e);
+            if (sessionId === this.playbackSessionId) {
+              speakNextChunk();
+            }
+          };
+
+          this.synth.speak(utterance);
+        } catch (err) {
           resolve(false);
-        };
+        }
+      };
 
-        // Watchdog rápido: se em 400ms a voz nativa não iniciou (ex: sistema sem voz instalada), cancela e usa áudio online
-        this.watchdogTimer = setTimeout(() => {
-          if (!started) {
-            console.warn('SpeechSynthesis demorou para iniciar, alternando para áudio online.');
-            try { this.synth.cancel(); } catch (e) {}
-            this.notifyState(false, '');
-            resolve(false);
-          }
-        }, 450);
-
-        this.synth.speak(utterance);
-      } catch (err) {
-        if (this.watchdogTimer) clearTimeout(this.watchdogTimer);
-        resolve(false);
-      }
+      speakNextChunk();
     });
   }
 
-  playAudioUrl(audioUrl, text, rate = 1.0, options = {}) {
+  // Reproduz sequencialmente frases via serviço online quando a voz nativa falha
+  playChunksViaOnlineAudio(chunks, lang, rate, sessionId, options = {}) {
+    return new Promise((resolve) => {
+      const isPt = lang.toLowerCase().startsWith('pt');
+      const targetLang = isPt ? 'pt' : 'en';
+      let idx = 0;
+
+      const playNextChunk = () => {
+        if (sessionId !== this.playbackSessionId) {
+          resolve(false);
+          return;
+        }
+        if (idx >= chunks.length) {
+          resolve(true);
+          return;
+        }
+
+        const currentChunk = chunks[idx];
+        idx++;
+
+        try {
+          const encoded = encodeURIComponent(currentChunk);
+          const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLang}&client=tw-ob&q=${encoded}`;
+          const audio = new Audio();
+          audio.referrerPolicy = 'no-referrer';
+          audio.src = audioUrl;
+          audio.playbackRate = rate || 1.0;
+          this.activeAudio = audio;
+
+          audio.onended = () => {
+            if (sessionId === this.playbackSessionId) {
+              playNextChunk();
+            }
+          };
+
+          audio.onerror = () => {
+            if (sessionId === this.playbackSessionId) {
+              playNextChunk();
+            }
+          };
+
+          audio.play().catch(() => {
+            resolve(false);
+          });
+        } catch (e) {
+          resolve(false);
+        }
+      };
+
+      playNextChunk();
+    });
+  }
+
+  playAudioUrl(audioUrl, text, rate = 1.0, options = {}, sessionId) {
     return new Promise((resolve) => {
       try {
         const audio = new Audio();
@@ -264,21 +377,27 @@ class SpeechService {
         this.activeAudio = audio;
 
         audio.onplay = () => {
-          this.notifyState(true, text);
-          if (options.onStart) options.onStart();
+          if (sessionId === this.playbackSessionId) {
+            this.notifyState(true, text);
+            if (options.onStart) options.onStart();
+          }
         };
 
         audio.onended = () => {
-          this.notifyState(false, '');
-          this.activeAudio = null;
-          if (options.onEnd) options.onEnd();
-          resolve(true);
+          if (sessionId === this.playbackSessionId) {
+            this.notifyState(false, '');
+            this.activeAudio = null;
+            if (options.onEnd) options.onEnd();
+            resolve(true);
+          }
         };
 
         audio.onerror = () => {
-          this.notifyState(false, '');
-          this.activeAudio = null;
-          resolve(false);
+          if (sessionId === this.playbackSessionId) {
+            this.notifyState(false, '');
+            this.activeAudio = null;
+            resolve(false);
+          }
         };
 
         const playPromise = audio.play();
@@ -286,8 +405,10 @@ class SpeechService {
           playPromise
             .then(() => resolve(true))
             .catch(() => {
-              this.notifyState(false, '');
-              this.activeAudio = null;
+              if (sessionId === this.playbackSessionId) {
+                this.notifyState(false, '');
+                this.activeAudio = null;
+              }
               resolve(false);
             });
         }
@@ -295,51 +416,6 @@ class SpeechService {
         resolve(false);
       }
     });
-  }
-
-  speakViaOnlineAudio(cleanText, lang, rate = 1.0, options = {}) {
-    try {
-      const isPt = lang.toLowerCase().startsWith('pt');
-      const targetLang = isPt ? 'pt' : 'en';
-
-      // Divide textos muito longos (ex: devocionais inteiros) para a API não cortar
-      const textToPlay = cleanText.length > 200 ? cleanText.slice(0, 195) + '...' : cleanText;
-      const encoded = encodeURIComponent(textToPlay);
-      const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&tl=${targetLang}&client=tw-ob&q=${encoded}`;
-
-      const audio = new Audio();
-      audio.referrerPolicy = 'no-referrer';
-      audio.src = audioUrl;
-      audio.playbackRate = rate || 1.0;
-      this.activeAudio = audio;
-
-      audio.onplay = () => {
-        this.notifyState(true, cleanText);
-        if (options.onStart) options.onStart();
-      };
-
-      audio.onended = () => {
-        this.notifyState(false, '');
-        this.activeAudio = null;
-        if (options.onEnd) options.onEnd();
-      };
-
-      audio.onerror = (e) => {
-        console.warn('Falha na reprodução de áudio online:', e);
-        this.notifyState(false, '');
-        this.activeAudio = null;
-        if (options.onError) options.onError(e);
-      };
-
-      audio.play().catch(e => {
-        console.warn('Reprodução de áudio bloqueada pelo navegador:', e);
-        this.notifyState(false, '');
-        this.activeAudio = null;
-      });
-    } catch (e) {
-      console.warn('Erro ao acionar áudio online:', e);
-      this.notifyState(false, '');
-    }
   }
 }
 

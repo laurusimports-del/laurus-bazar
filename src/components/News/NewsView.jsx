@@ -107,7 +107,15 @@ export const NewsView = () => {
     }
     speechService.stop();
     setPlayingLang('en');
-    speechService.speak(activeArticle.audioText || activeArticle.contentEn, {
+
+    // Monta o texto completo da notícia: Manchete + Resumo Executivo + Todos os parágrafos do artigo
+    const fullArticleEn = [
+      activeArticle.headlineEn,
+      activeArticle.leadSummaryEn,
+      activeArticle.contentEn
+    ].filter(Boolean).join('. ');
+
+    speechService.speak(fullArticleEn, {
       lang: 'en-US',
       rate: settings.speechRate || 0.85,
       onEnd: () => setPlayingLang(null),
@@ -123,7 +131,15 @@ export const NewsView = () => {
     }
     speechService.stop();
     setPlayingLang('pt');
-    speechService.speak(activeArticle.contentPt, {
+
+    // Monta a tradução completa da notícia: Manchete + Resumo + Conteúdo completo
+    const fullArticlePt = [
+      activeArticle.headlinePt,
+      activeArticle.leadSummaryPt,
+      activeArticle.contentPt
+    ].filter(Boolean).join('. ');
+
+    speechService.speak(fullArticlePt, {
       lang: 'pt-BR',
       rate: 0.95,
       onEnd: () => setPlayingLang(null),
